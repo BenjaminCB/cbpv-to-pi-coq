@@ -36,6 +36,8 @@ Definition extend_subst (s : term) (subst : nat -> term) (n : nat) :=
   | S n => subst n
   end.
 
+Notation "s |> subst" := (extend_subst s subst) (at level 81, left associativity).
+
 Definition compose_subst_int_rn 
   (subst : nat -> term)
   (rn : nat -> nat)
@@ -44,6 +46,8 @@ Definition compose_subst_int_rn
 
 Definition lift_subst (subst : nat -> term) := 
   extend_subst (Var 0) (compose_subst_int_rn subst shift).
+
+Notation "^ subst" := (lift_subst subst) (at level 81, left associativity).
 
 Fixpoint int_subst (s : term) (subst : nat -> term) :=
   match s with
@@ -59,4 +63,18 @@ Definition compose_subst_int_subst
   (n : nat) 
   := (subst n)[[subst']].
 
+Theorem stable_substitution:
+  forall (s t : term), 
+  forall subst : nat -> term, 
+  ((s[[^ subst]])[[(t[[subst]]) |> Var]]) = 
+    ((s[[t |> Var]])[[subst]]).
+Proof.
+  intros s t subst.
+  induction s as [ v | s' ih | s' t' ih ].
+  - admit.
+  - admit.
+  - admit.
+Qed.
+  
+  
 
