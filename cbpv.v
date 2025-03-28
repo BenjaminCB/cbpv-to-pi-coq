@@ -89,17 +89,15 @@ Definition compose_subst_int_subst
   (n : nat) 
   := (subst n)[.[subst'].].
 
+Inductive reduction: term -> term -> Prop :=
+  | BINDING_BASE (v : value) (s : term): 
+    reduction (Bind (Ret v) s) (s [[v |> Var]])
+  | BINDING_EVOLVE (s t s' : term):
+    reduction s s' -> reduction (Bind s t) (Bind s' t)
+  | FORCE_THUNK (s : term):
+    reduction (Force (Thunk s)) (s)
+  | APPLICATION_BASE (s : term) (v : value):
+    reduction (App (Abs s) v) (s [[v |> Var]])
+  | APPLICATION_EVOLVE (s t : term) (v : value):
+    reduction s t -> reduction (App s v) (App t v).
 
-Theorem stable_substitution:
-  forall (s : term), 
-  forall (v : value),
-  forall subst : nat -> value, 
-  ((s[[^ subst]])[[(v[.[subst].]) |> Var]]) = 
-    ((s[[v |> Var]])[[subst]]).
-Proof.
-  intros s t subst.
-  induction s as [ v | s' ih | s' t' ih ].
-  - admit.
-  - admit.
-  - admit.
-Qed.
