@@ -49,7 +49,7 @@ Notation "v <.< rn >.>" := (int_rn_value v rn) (at level 90, left associativity)
 Definition extend_subst (v : value) (subst : nat -> value) (n : nat) := 
   match n with
   | 0 => v
-  | S n => subst n
+  | S n' => subst n'
   end.
 
 Notation "v |> subst" := (extend_subst v subst) (at level 81, left associativity).
@@ -89,15 +89,30 @@ Definition compose_subst_int_subst
   (n : nat) 
   := (subst n)[.[subst'].].
 
+Reserved Notation "s --> t" (at level 70).
+
 Inductive reduction: term -> term -> Prop :=
   | BINDING_BASE (v : value) (s : term): 
-    reduction (Bind (Ret v) s) (s [[v |> Var]])
+    (Bind (Ret v) s) --> (s [[v |> Var]])
   | BINDING_EVOLVE (s t s' : term):
-    reduction s s' -> reduction (Bind s t) (Bind s' t)
+    s --> s' -> (Bind s t) --> (Bind s' t)
   | FORCE_THUNK (s : term):
-    reduction (Force (Thunk s)) (s)
+    (Force (Thunk s)) --> (s)
   | APPLICATION_BASE (s : term) (v : value):
-    reduction (App (Abs s) v) (s [[v |> Var]])
+    (App (Abs s) v) -->(s [[v |> Var]])
   | APPLICATION_EVOLVE (s t : term) (v : value):
-    reduction s t -> reduction (App s v) (App t v).
+    s --> t -> (App s v) --> (App t v)
+  
+  where "s --> t" := (reduction s t).
 
+Example bb1:
+  reduction (Bind (Ret (Var 2)) (Val (Var 0))) (Val (Var 2)).
+Proof.
+  apply BINDING_BASE.
+Qed.
+
+Example bb2:
+  reduction (Bind (Ret (Var 2)) (Val (Var 1))) (Val (Var 0)).
+Proof.
+  apply BINDING_BASE with (v := Var 2) (s := Val (Var 1)).
+Qed.
