@@ -93,6 +93,18 @@ Inductive trans: proc -> act -> proc -> Prop :=
  
   where "P -( a )> Q" := (trans P a Q).
 
+Reserved Notation "P =( a )> Q" (at level 70).
+
+Inductive weak_trans: proc -> act -> proc -> Prop := 
+  | PRE_INTERNAL (p q r : proc) (a : act) :
+    p -( a_tau )> q /\ q =( a )> r -> p =( a )> r
+  | ACTION (p q : proc) (a : act) :
+    p -( a )> q -> p =( a )> q
+  | POST_INTERNAL (p q r : proc) (a : act) :
+    p -( a )> q /\ q =( a_tau )> r -> p =( a )> r
+ 
+  where "P =( a )> Q" := (weak_trans P a Q).
+
 
 Example comuni:
   (Out 1 0 Nil) -(a_out 1 0)> Nil.
