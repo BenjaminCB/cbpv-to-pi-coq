@@ -28,7 +28,7 @@ Fixpoint findRef (n : nat) (refs : List.list (nat * nat)) :=
 Fixpoint encode (s : term) (u r : nat) (refs : List.list (nat * nat)) :=
   match s with
   | Val v => encode_value v u refs
-  | Abs s => In u (In 0 (In 1 (In 2 (encode s 2 1 (incRefs 1 4 refs)))))
+  | Abs s => In u (In 0 (In 1 (In 2 (encode s 2 1 ((0,0) :: incRefs 1 4 refs)))))
   | App s v => Res (Res (Par 
       (encode s 1 0 (incRefs 0 2 refs)) 
       (Res (Out 2 0 (Out 0 (u + 3) (Out 0 (r + 3) 
@@ -42,7 +42,7 @@ Fixpoint encode (s : term) (u r : nat) (refs : List.list (nat * nat)) :=
   | Ret v => encode_value v r refs
   | Bind s t => Res (Par 
       (Res (encode s 0 1 (incRefs 0 2 refs))) 
-      (In 0 (encode t (u + 2) (r + 2) (incRefs 1 2 refs)))
+      (In 0 (encode t (u + 2) (r + 2) ((0,0) :: incRefs 1 2 refs)))
     )
   end
 
@@ -53,3 +53,5 @@ with encode_value (v : value) (u : nat) (refs : List.list (nat * nat)) :=
       (encode s 1 0 (incRefs 0 4 refs))
     )))))
   end.
+
+Compute (encode (Abs (Abs (Val (Var 1)))) 1 2 List.nil).
