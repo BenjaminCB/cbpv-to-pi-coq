@@ -9,11 +9,11 @@
             let
                 pkgs = nixpkgs.legacyPackages.${system};
             in {
+                packages.default = pkgs.hello;
                 packages.hello = pkgs.hello;
                 devShells.default = pkgs.mkShell {
                     nativeBuildInputs = with pkgs; [
                         coq_8_15
-                        coq_8_15Packages.coqide
                     ];
                     shellHook = ''
                         echo Welcome to coq shell
