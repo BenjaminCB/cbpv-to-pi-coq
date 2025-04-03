@@ -57,7 +57,7 @@ Inductive trans: proc -> act -> proc -> Prop :=
     trans (Out n m P) (a_out n m) P
   | IN    (n m : nat) (P: proc): 
     trans (In n P) (a_in n m) (P[[m |> id]])
-  | PAR1 (a : act) (n m : nat) (P Q R: proc): 
+  | PAR1 (a : act) (n m : nat) (P Q R: proc):
     a = a_in n m \/ a = a_tau \/ a = a_out n m ->
     trans P a R -> trans (Par P Q) a (Par R Q)
   | PAR2  (a : act) (n : nat) (P Q R : proc):
@@ -102,6 +102,8 @@ Inductive weak_trans: proc -> act -> proc -> Prop :=
     p -( a )> q -> p =( a )> q
   | POST_INTERNAL (p q r : proc) (a : act) :
     p -( a )> q /\ q =( a_tau )> r -> p =( a )> r
+  | TAU (p : proc) :
+    p =( a_tau )> p
  
   where "P =( a )> Q" := (weak_trans P a Q).
 
