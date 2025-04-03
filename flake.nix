@@ -14,6 +14,14 @@
                 devShells.default = pkgs.mkShell {
                     nativeBuildInputs = with pkgs; [
                         coq_8_15
+                        coqPackages.coqide
+                    ] ++ [
+                        ((import ./coinduction.nix) {
+                            lib = pkgs.lib;
+                            mkCoqDerivation = pkgs.mkCoqDerivation;
+                            coq = pkgs.coq;
+                            stdlib = coqPackages.coqide;
+                        })
                     ];
                     shellHook = ''
                         echo Welcome to coq shell
