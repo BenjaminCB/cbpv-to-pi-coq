@@ -83,7 +83,8 @@ Inductive trans: proc -> act -> proc -> Prop :=
     trans (Par P Q) a_tau (Par R (S))
   | COM21  (n : nat) (P Q R S : proc) :
     trans P (a_in n 0) R ->
-    trans Q (a_bout n) S 
+    trans Q (a_bout n) S ->
+    trans (Par P Q) a_tau (Res (Par R S))
   | COM22  (n : nat) (P Q R S : proc) :
     trans P (a_bout n) R ->
     trans Q (a_in n 0) S ->

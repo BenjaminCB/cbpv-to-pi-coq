@@ -81,7 +81,8 @@ Example weak_bisimilar_Nil_Nil : weak_bisimilar Nil Nil.
 Proof. apply weak_reflexive. Qed.
 
 
-
+Lemma Nil_transition_less : forall P a, ~(Nil -(a)> P).
+Proof. intros. intro H. inversion H. Qed.
 
 
 

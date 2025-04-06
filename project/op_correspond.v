@@ -23,6 +23,7 @@ forall (M : term) (P : proc) (u r : nat), (encode M u r List.nil) -(a_tau)> P
   /\ (P' ~~ (encode N u r List.nil)) /\ (M --> N \/ M = N)).
 Proof. intro. induction M. intros.
   - induction H. 
-  *
+  * 
+  Admitted.
 
 
