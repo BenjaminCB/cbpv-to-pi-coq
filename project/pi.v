@@ -53,8 +53,8 @@ Inductive act : Set :=
 Reserved Notation "P -( a )> Q" (at level 70).
 
 Inductive trans: proc -> act -> proc -> Prop := 
-  | OUT   (n m : nat) (P : proc): 
-    trans (Out n m P) (a_out n m) P
+  | OUT   (a : act)(n m : nat) (P : proc): 
+    trans (Out n m P) (a) P  
   | IN    (n m : nat) (P: proc): 
     trans (In n P) (a_in n m) (P[[m |> id]])
   | PAR1 (a : act) (n m : nat) (P Q R: proc):

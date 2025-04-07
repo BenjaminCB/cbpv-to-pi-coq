@@ -46,13 +46,13 @@ with int_rn_value (v : value) (rn : nat -> nat) :=
 Notation "s << rn >>" := (int_rn s rn) (at level 90, left associativity).
 Notation "v <.< rn >.>" := (int_rn_value v rn) (at level 90, left associativity).
 
-Definition extend_subst (v : value) (subst : nat -> value) (n : nat) := 
+Definition extend_subst_lam (v : value) (subst : nat -> value) (n : nat) := 
   match n with
   | 0 => v
   | S n' => subst n'
   end.
 
-Notation "v |> subst" := (extend_subst v subst) (at level 81, left associativity).
+Notation "v |> subst" := (extend_subst_lam v subst) (at level 81, left associativity).
 
 Definition compose_subst_int_rn 
   (subst : nat -> value)
@@ -61,7 +61,7 @@ Definition compose_subst_int_rn
   := int_rn_value (subst n) rn.
 
 Definition lift_subst (subst : nat -> value) := 
-  extend_subst (Var 0) (compose_subst_int_rn subst shift).
+  extend_subst_lam (Var 0) (compose_subst_int_rn subst shift).
 
 Notation "^ subst" := (lift_subst subst) (at level 81, left associativity).
 
@@ -81,7 +81,7 @@ with int_subst_value (v : value) (subst : nat -> value) :=
   | Thunk s => Thunk (int_subst s subst)
   end.
 
-Notation "s [[ subst ]]" := (int_subst s subst) (at level 90, left associativity).
+Notation "s [l[ subst ]l]" := (int_subst s subst) (at level 90, left associativity).
 Notation "v [.[ subst ].]" := (int_subst_value v subst) (at level 90, left associativity).
 
 Definition compose_subst_int_subst
@@ -93,13 +93,13 @@ Reserved Notation "s --> t" (at level 70).
 
 Inductive reduction: term -> term -> Prop :=
   | BINDING_BASE (v : value) (s : term): 
-    (Bind (Ret v) s) --> (s [[v |> Var]])
+    (Bind (Ret v) s) --> (s [l[v |> Var]l])
   | BINDING_EVOLVE (s t s' : term):
     s --> s' -> (Bind s t) --> (Bind s' t)
   | FORCE_THUNK (s : term):
     (Force (Thunk s)) --> (s)
   | APPLICATION_BASE (s : term) (v : value):
-    (App (Abs s) v) -->(s [[v |> Var]])
+    (App (Abs s) v) -->(s [l[v |> Var]l])
   | APPLICATION_EVOLVE (s t : term) (v : value):
     s --> t -> (App s v) --> (App t v)
   
