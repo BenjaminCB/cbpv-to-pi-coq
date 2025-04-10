@@ -97,7 +97,7 @@ Inductive trans: proc -> act -> proc -> Prop :=
 Reserved Notation "P =( a )> Q" (at level 70).
 
 Inductive weak_trans: proc -> act -> proc -> Prop := 
-  | PRE_INTERNAL (p q r : proc) (a : act) :
+  | PRE_INTERNAL  : forall (p q r : proc) (a : act),
     p -( a_tau )> q /\ q =( a )> r -> p =( a )> r
   | ACTION (p q : proc) (a : act) :
     p -( a )> q -> p =( a )> q

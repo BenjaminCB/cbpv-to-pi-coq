@@ -30,27 +30,36 @@ Lemma sub_lemma : forall (M : term) (V : value) (u r : nat) (ref : List.list (na
 encode (M [l[(extend_subst_lam V Var)]l]) u r ref ~~ Res ( Par ((encode M (u+1) (r+1) (incRefs 0 1 ref))) (encode_value V ref)).  
 Proof. Admitted.
 
-Theorem Sound_encoding : 
-forall (M N : term) (u r : nat), M --> N -> (exists (P' : proc), (encode M u r List.nil) =(a_tau)> P' 
-  /\ (P' ~~ (encode N u r List.nil))). 
+Lemma res_weak : forall (P P': proc), P =(a_tau)> P' -> Res P =(a_tau)> Res P'.
 Proof. intros. induction H.
-  - simpl.
-  induction v. 
-  * simpl.
+- apply PRE_INTERNAL with (r := r) (q := q).
+ split. apply RES22. apply H. apply ACTION. destruct H. Admitted.
+
+
+
+Theorem Sound_encoding : 
+forall (M N : term), M --> N -> (forall (u r : nat),(exists (P' : proc), (encode M u r List.nil) =(a_tau)> P' 
+  /\ (P' ~~ (encode N u r List.nil)))). 
+Proof. intro. intro. intro. induction H.
+  - simpl. intros. 
   exists (Res(Res(
     (Par
        (Res
           
-             ((Rep (In 0 (Out (n + 1) 0 Nil))[[swap]])))
+             (encode_value v Datatypes.nil [[swap]]) )
        (
           (encode s (u + 2) (r + 2)
              ((0, 0) :: Datatypes.nil)[[0 |> id]])))))).
     split.
     + apply ACTION. apply RES22. apply COM22 with (n := 0).
-      apply RESBOUT. apply RES1. apply OUT.
-      apply IN.
-    +
-
+    * apply RESBOUT with (n := 0). apply RES1.  apply OUT.
+    * apply IN.
+    +  admit. 
+  - intros. exists (encode (Bind s' t) u r Datatypes.nil).
+  split.
+  + simpl. apply ACTION. apply RES22. apply PAR1 with (n := 1) (m := 1). auto. 
+  apply RES22.
+  
   Admitted.
 
 Theorem Complete_encoding : 
