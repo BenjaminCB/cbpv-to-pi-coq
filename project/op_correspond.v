@@ -32,7 +32,7 @@ Proof. Admitted.
 
 Lemma res_weak : forall (P P': proc), P =(a_tau)> P' -> Res P =(a_tau)> Res P'.
 Proof. intros. induction H.
-- apply PRE_INTERNAL with (r := r) (q := q).
+- apply PRE_INTERNAL with (r := Res r) (q := Res q).
  split. apply RES22. apply H. apply ACTION. destruct H. Admitted.
 
 
