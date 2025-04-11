@@ -44,15 +44,59 @@ Fixpoint int_subst (p : proc) (subst : nat -> nat) :=
 Notation "p [[ subst ]]" := (int_subst p subst) (at level 90, left associativity).
 Notation "v |> subst" := (extend_subst v subst) (at level 81, left associativity).
 
-Inductive act : Set :=
-  | a_tau : act
-  | a_out: nat -> nat -> act
-  | a_in: nat -> nat -> act
-  | a_bout: nat -> act.
+Reserved Notation "P -(a_tau)> Q" (at level 70).
+Reserved Notation "P -(a_in)> Q" (at level 70).
 
-Reserved Notation "P -( a )> Q" (at level 70).
+ 
+Inductive trans_in: proc -> nat -> nat -> proc -> Prop :=  
+  | IN    (n m : nat) (P: proc): 
+    trans_in (In n P) n m (P[[m |> id]])
+  | PAR1 (n m : nat) (P Q R: proc):
+    trans_in P n m R -> trans_in (Par P Q) n m (Par R Q)
+  | PAR12 (n m : nat) (P Q R: proc):
+    trans_in Q n m R -> trans_in (Par P Q) n m (Par P R)
+  | RES21 (n m : nat) (P Q : proc) :
+    trans_in P (n + 1) (m + 1) Q -> 
+    trans_in (Res P) n m (Res Q)
+  | REP   (P Q: proc) (n m : nat) : 
+    trans_in (Par P (Rep P)) n m Q -> trans_in (Rep P) n m Q
 
-Inductive trans: proc -> act -> proc -> Prop := 
+  where "P -(a_in)> Q" := (trans_in P Q).
+
+
+Inductive trans: proc -> proc -> Prop := 
+  | TPAR1 (n m : nat) (P Q R: proc):
+    trans P R -> trans (Par P Q) (Par R Q)
+  | TPAR2 (n m : nat) (P Q R: proc):
+    trans Q R -> trans (Par P Q) (Par P R)
+  | RES22 (P Q : proc) :
+    trans P Q -> 
+    trans (Res P) (Res Q)
+  | COM11  (n m : nat) (P Q R S : proc) :
+    trans_in P n m R ->
+    trans_out Q n m S ->
+    trans (Par P Q) (Par R S)
+  | COM12  (n m : nat) (P Q R S : proc) :
+    trans_out P n m R ->
+    trans_in Q n m S ->
+    trans (Par P Q) (Par R S)
+  | COM21  (n : nat) (P Q R S : proc) :
+    trans_in P n 0 R ->
+    trans_bout Q n S ->
+    trans (Par P Q) (Res (Par R S))
+  | COM22  (n : nat) (P Q R S : proc) :
+    trans_bout P n R ->
+    trans_in Q n 0 S ->
+    trans (Par P Q) (Res (Par R S))
+  | REP (P Q: proc) : 
+    trans (Par P (Rep P)) Q -> trans (Rep P) Q
+ 
+  where "P -(a_tau)> Q" := (trans P Q).
+
+Reserved Notation "P =( a )> Q" (at level 70).
+
+
+Inductive trans: proc -> proc -> Prop :=  
   | OUT   (a : act)(n m : nat) (P : proc): 
     trans (Out n m P) (a) P  
   | IN    (n m : nat) (P: proc): 
@@ -93,11 +137,8 @@ Inductive trans: proc -> act -> proc -> Prop :=
     trans Q (a_in n 0) S ->
     trans (Par P Q) a_tau (Res (Par R S))
   | REP   (a : act) (P Q: proc) : 
-    trans (Par P (Rep P)) a Q -> trans (Rep P) a Q
- 
-  where "P -( a )> Q" := (trans P a Q).
+    trans (Par P (Rep P)) a Q -> trans (Rep P) a Q.
 
-Reserved Notation "P =( a )> Q" (at level 70).
 
 Inductive weak_trans: proc -> act -> proc -> Prop := 
   | PRE_INTERNAL (p q r : proc) (a : act) :

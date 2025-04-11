@@ -1,0 +1,10 @@
+From Encoding Require Export pi.
+From Encoding Require Export cbpv.
+From Encoding Require Export encoding.
+From Encoding Require Export bisimulation.
+Require Import Coq.Classes.DecidableClass.
+Require Coq.Lists.List.
+Require Import Nat.
+
+Theorem Op_correspond : 
+forall (M N : term) (u r : nat), M --> N -> exists (P' : proc), (encode M u r) =(a_tau)> P' /\ P' ~~ (encode N u r). 
