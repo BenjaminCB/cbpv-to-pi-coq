@@ -89,7 +89,10 @@ Proof. intros. intro H. inversion H. Qed.
 Lemma Nil_transition_less_out : forall P n m, ~(trans_out Nil n m P).
 Proof. intros. intro H. inversion H. Qed.
 
-
+Lemma Weak_Tau_Res : forall (P Q : proc),  P =()> Q -> (Res P) =()> (Res Q).
+Proof. intros. induction H.
+  - apply TPRE_INTERNAL with (r := Res r) (q := Res q). split. apply RES22. apply H.
+  Admitted.
 
 
 
