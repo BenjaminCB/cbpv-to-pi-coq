@@ -45,23 +45,49 @@ Notation "p [[ subst ]]" := (int_subst p subst) (at level 90, left associativity
 Notation "v |> subst" := (extend_subst v subst) (at level 81, left associativity).
 
 Reserved Notation "P -(a_tau)> Q" (at level 70).
-Reserved Notation "P -(a_in)> Q" (at level 70).
-
+Reserved Notation "P -(a_in)> n m Q" (at level 70, n at next level, m at next level, Q at next level).
+Reserved Notation "P -(a_out)> n m Q" (at level 78, n at next level, m at next level, Q at next level).
+Reserved Notation "P -(a_bout)> n Q" (at level 70).
  
 Inductive trans_in: proc -> nat -> nat -> proc -> Prop :=  
   | IN    (n m : nat) (P: proc): 
     trans_in (In n P) n m (P[[m |> id]])
-  | PAR1 (n m : nat) (P Q R: proc):
+  | IPAR1 (n m : nat) (P Q R: proc):
     trans_in P n m R -> trans_in (Par P Q) n m (Par R Q)
-  | PAR12 (n m : nat) (P Q R: proc):
+  | IPAR12 (n m : nat) (P Q R: proc):
     trans_in Q n m R -> trans_in (Par P Q) n m (Par P R)
-  | RES21 (n m : nat) (P Q : proc) :
+  | IRES21 (n m : nat) (P Q : proc) :
     trans_in P (n + 1) (m + 1) Q -> 
     trans_in (Res P) n m (Res Q)
-  | REP   (P Q: proc) (n m : nat) : 
+  | IREP   (P Q: proc) (n m : nat) : 
     trans_in (Par P (Rep P)) n m Q -> trans_in (Rep P) n m Q
 
-  where "P -(a_in)> Q" := (trans_in P Q).
+  where "P -(a_in)> n m Q" := (trans_in P n m Q).
+
+Inductive trans_out: proc -> nat -> nat -> proc -> Prop :=  
+  | OUT   (n m : nat) (P : proc): 
+    trans_out (Out n m P) n m P  
+  | OPAR1 (n m : nat) (P Q R: proc):
+    trans_out P n m R -> trans_out (Par P Q) n m (Par R Q)
+  | OPAR12 (n m : nat) (P Q R: proc):
+    trans_out Q n m R -> trans_out (Par P Q) n m (Par P R)
+  | ORES21 (n m : nat) (P Q : proc) :
+    trans_out P (n + 1) (m + 1) Q -> 
+    trans_out (Res P)  n m (Res Q)
+  | OREP (n m : nat)(P Q: proc) : 
+    trans_out (Par P (Rep P)) n m Q -> trans_out (Rep P) n m Q
+  where "P -(a_out)> n m Q" := (trans_out P n m Q).
+
+Inductive trans_bout: proc -> nat -> proc -> Prop :=  
+  | BOPAR2  (n : nat) (P Q R : proc):
+    trans_bout P n R -> trans_bout (Par P Q) n (Par R (Q[[shift]]))
+  | BORES1  (n : nat) (P R : proc):
+    trans_out P (n + 1) 0 R -> trans_bout (Res P) n R
+  | BORESBOUT (n : nat) (P Q : proc) :
+    trans_bout P (n+1) Q -> trans_bout (Res P) n (Res (Q[[swap]]))
+  | BOREP   (n : nat) (P Q: proc) : 
+    trans_bout (Par P (Rep P)) n Q -> trans_bout (Rep P) n Q
+  where "P -(a_bout)> n Q" := (trans_bout P n Q).
 
 
 Inductive trans: proc -> proc -> Prop := 
@@ -93,68 +119,75 @@ Inductive trans: proc -> proc -> Prop :=
  
   where "P -(a_tau)> Q" := (trans P Q).
 
-Reserved Notation "P =( a )> Q" (at level 70).
+Reserved Notation "P =()> Q" (at level 70).
 
-
-Inductive trans: proc -> proc -> Prop :=  
-  | OUT   (a : act)(n m : nat) (P : proc): 
-    trans (Out n m P) (a) P  
-  | IN    (n m : nat) (P: proc): 
-    trans (In n P) (a_in n m) (P[[m |> id]])
-  | PAR1 (a : act) (n m : nat) (P Q R: proc):
-    a = a_in n m \/ a = a_tau \/ a = a_out n m ->
-    trans P a R -> trans (Par P Q) a (Par R Q)
-  | PAR12 (a : act) (n m : nat) (P Q R: proc):
-    a = a_in n m \/ a = a_tau \/ a = a_out n m ->
-    trans Q a R -> trans (Par P Q) a (Par P R)
-  | PAR2  (a : act) (n : nat) (P Q R : proc):
-    trans P (a_bout n) R -> trans (Par P Q) (a_bout n) (Par R (Q[[shift]]))
-  | RES1  (n : nat) (P R : proc):
-    trans P (a_out (n + 1) 0 ) R -> trans (Res P) (a_bout n) R
-  | RES21 (a : nat -> nat -> act) (n m : nat) (P Q : proc) :
-    a = a_out \/ a = a_in ->
-    trans P (a (n + 1) (m + 1)) Q -> 
-    trans (Res P) (a n m) (Res Q)
-  | RES22 (P Q : proc) :
-    trans P (a_tau) Q -> 
-    trans (Res P) (a_tau) (Res Q)
-  | RESBOUT (n : nat) (P Q : proc) :
-    trans P (a_bout (n+1)) Q -> trans (Res P) (a_bout n) (Res (Q[[swap]]))
-  | COM11  (n m : nat) (P Q R S : proc) :
-    trans P (a_in n m) R ->
-    trans Q (a_out n m) S ->
-    trans (Par P Q) a_tau (Par (R) S)
-  | COM12  (n m : nat) (P Q R S : proc) :
-    trans P (a_out n m) R ->
-    trans Q (a_in n m) S ->
-    trans (Par P Q) a_tau (Par R (S))
-  | COM21  (n : nat) (P Q R S : proc) :
-    trans P (a_in n 0) R ->
-    trans Q (a_bout n) S ->
-    trans (Par P Q) a_tau (Res (Par R S))
-  | COM22  (n : nat) (P Q R S : proc) :
-    trans P (a_bout n) R ->
-    trans Q (a_in n 0) S ->
-    trans (Par P Q) a_tau (Res (Par R S))
-  | REP   (a : act) (P Q: proc) : 
-    trans (Par P (Rep P)) a Q -> trans (Rep P) a Q.
-
-
-Inductive weak_trans: proc -> act -> proc -> Prop := 
-  | PRE_INTERNAL (p q r : proc) (a : act) :
-    p -( a_tau )> q /\ q =( a )> r -> p =( a )> r
-  | ACTION (p q : proc) (a : act) :
-    p -( a )> q -> p =( a )> q
-  | POST_INTERNAL (p q r : proc) (a : act) :
-    p -( a )> q /\ q =( a_tau )> r -> p =( a )> r
+Inductive weak_tau: proc -> proc -> Prop := 
+  | TPRE_INTERNAL (p q r : proc) :
+    p -(a_tau)> q /\ q =()> r -> p =()> r
+  | ACTION (p q : proc) :
+    p -(a_tau)> q -> p =()> q
   | TAU (p : proc) :
-    p =( a_tau )> p
+    p =()> p
+ where "P =()> Q" := (weak_tau P Q).
+
+Reserved Notation "P =(a_out n m )> Q" (at level 71).
+
+Inductive weak_out: proc -> nat -> nat -> proc -> Prop := 
+  
+  | OPRE_INTERNAL (p q r : proc) (n m : nat):
+
+    p -(a_tau)> q /\ 
+    weak_out q n m r -> 
+    weak_out p n m r
+
+  | OPOST_INTERNAL (p q r : proc) (n m : nat):
+    weak_out p n m q /\ 
+    q -(a_tau)> r ->     
+    weak_out p n m r
  
-  where "P =( a )> Q" := (weak_trans P a Q).
+   | OACTION (p q : proc) (n m : nat):
+    trans_out p n m q -> 
+    weak_out p n m q 
+
+ where "P =(a_out n m )> Q" := (weak_out P n m Q).
+
+Inductive weak_in: proc -> nat -> nat -> proc -> Prop := 
+  
+  | IPRE_INTERNAL (p q r : proc) (n m : nat):
+
+    p -(a_tau)> q /\ 
+    weak_in q n m r -> 
+    weak_in p n m r
+
+  | IPOST_INTERNAL (p q r : proc) (n m : nat):
+    weak_in p n m q /\ 
+    q -(a_tau)> r ->     
+    weak_in p n m r
+ 
+   | IACTION (p q : proc) (n m : nat):
+    trans_in p n m q -> 
+    weak_in p n m q.
+
+Inductive weak_bout: proc -> nat -> proc -> Prop := 
+  
+  | BOPRE_INTERNAL (p q r : proc) (n : nat):
+
+    p -(a_tau)> q /\ 
+    weak_bout q n r -> 
+    weak_bout p n r
+
+  | BOPOST_INTERNAL (p q r : proc) (n : nat):
+    weak_bout p n q /\ 
+    q -(a_tau)> r ->     
+    weak_bout p n r
+ 
+   | BACTION (p q : proc) (n : nat):
+    trans_bout p n q -> 
+    weak_bout p n q.
 
 
 Example comuni:
-  (Out 1 0 Nil) -(a_out 1 0)> Nil.
+  trans_out (Out 1 0 Nil) 1 0 Nil.
 Proof. apply OUT. Qed.
 
 
@@ -164,8 +197,5 @@ Proof. apply COM12 with (P := Out 1 0 Nil) (Q := In 1 Nil) (R := Nil) (S := Nil)
   apply OUT. apply IN with (n := 1).
 Qed.
 
-Lemma fef:
-  forall (P Q R S : proc) (n m : nat), P-(a_out n m)> R -> Q-(a_in n m)> S -> Par Q P -(a_tau)> Par S R.
-Proof. intros. apply COM11 with (Q := P) (P := Q) (R := S) (S := R) (m := m) (n := n). apply H0. apply H.
-Qed.
+
 
