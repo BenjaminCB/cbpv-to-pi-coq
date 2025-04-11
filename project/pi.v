@@ -63,7 +63,7 @@ Inductive trans: proc -> act -> proc -> Prop :=
   | PAR12 (a : act) (n m : nat) (P Q R: proc):
     a = a_in n m \/ a = a_tau \/ a = a_out n m ->
     trans Q a R -> trans (Par P Q) a (Par P R)
-  | PAR2  (a : act) (n : nat) (P Q R : proc):
+  | PAR2 (n : nat) (P Q R : proc):
     trans P (a_bout n) R -> trans (Par P Q) (a_bout n) (Par R (Q[[shift]]))
   | RES1  (n : nat) (P R : proc):
     trans P (a_out (n + 1) 0 ) R -> trans (Res P) (a_bout n) R
