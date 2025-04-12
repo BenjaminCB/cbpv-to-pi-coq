@@ -91,9 +91,9 @@ Inductive trans_bout: proc -> nat -> proc -> Prop :=
 
 
 Inductive trans: proc -> proc -> Prop := 
-  | TPAR1 (n m : nat) (P Q R: proc):
+  | TPAR1 (P Q R: proc):
     trans P R -> trans (Par P Q) (Par R Q)
-  | TPAR2 (n m : nat) (P Q R: proc):
+  | TPAR2  (P Q R: proc):
     trans Q R -> trans (Par P Q) (Par P R)
   | RES22 (P Q : proc) :
     trans P Q -> 

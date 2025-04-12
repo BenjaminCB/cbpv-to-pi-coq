@@ -91,8 +91,16 @@ Proof. intros. intro H. inversion H. Qed.
 
 Lemma Weak_Tau_Res : forall (P Q : proc),  P =()> Q -> (Res P) =()> (Res Q).
 Proof. intros. induction H.
-  - apply TPRE_INTERNAL with (r := Res r) (q := Res q). split. apply RES22. apply H.
-  Admitted.
+  - apply TPRE_INTERNAL with (r := Res r) (q := Res q). split. 
+ apply RES22. apply H. destruct H. admit. 
+      - apply ACTION. apply RES22. auto.
+      - apply TAU.
+Admitted.
 
-
-
+Lemma Weak_Tau_Par : forall (P Q R : proc),  P =()> R -> (Par P Q) =()> (Par R Q).
+Proof. intros. induction H.
+  - apply TPRE_INTERNAL with (r := Par r Q) (q := Par q Q). split. 
+ apply TPAR1. apply H. destruct H. admit. 
+      - apply ACTION. apply TPAR1. auto.
+      - apply TAU.
+Admitted.
