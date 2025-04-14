@@ -54,6 +54,7 @@ Inductive struct_cong : proc -> proc -> Prop :=
   | sg_trans : forall p q r, struct_cong p q -> struct_cong q r -> struct_cong p r.
 
 
+
 CoInductive weak_bisimilar : proc -> proc -> Prop :=
 | weak_bisim_tau : forall p q,
     (forall p',

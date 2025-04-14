@@ -185,6 +185,15 @@ Inductive weak_bout: proc -> nat -> proc -> Prop :=
     trans_bout p n q -> 
     weak_bout p n q.
 
+Fixpoint not_in (p : proc) (n : nat) : Prop :=
+  match p with
+  | Res p' => not_in p' (n+1)
+  | Par q r => (not_in q n) /\ (not_in r n)
+  | Rep p' => (not_in p' n)
+  | In m p' => ~(m = n) /\ (not_in p' (n+1))  
+  | Out m l p' => ~(m = n) /\ ~(l = n) /\ (not_in p' (n+1))
+  | Nil => True
+end.
 
 Example comuni:
   trans_out (Out 1 0 Nil) 1 0 Nil.
