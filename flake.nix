@@ -7,10 +7,7 @@
     outputs = { self, nixpkgs, flake-utils }:
         flake-utils.lib.eachDefaultSystem (system:
             let
-                pkgs = import nixpkgs {
-                    inherit system;
-                    overlays = [ (import ./vscoq-2.2.5.nix) ];
-                };
+                pkgs = nixpkgs.legacyPackages.${system};
             in {
                 packages.default = pkgs.hello;
                 packages.hello = pkgs.hello;
@@ -19,7 +16,6 @@
                         coq
                         coqPackages.coqide
                         coqPackages.paco
-                        coqPackages.vscoq-language-server.override
                     ];
                     shellHook = ''
                         echo Welcome to coq shell
