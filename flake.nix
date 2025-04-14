@@ -7,7 +7,10 @@
     outputs = { self, nixpkgs, flake-utils }:
         flake-utils.lib.eachDefaultSystem (system:
             let
-                pkgs = nixpkgs.legacyPackages.${system};
+                pkgs = import nixpkgs {
+                    inherit system;
+                    overlays = [ (import ./vscoq-2.2.5.nix) ];
+                };
             in {
                 packages.default = pkgs.hello;
                 packages.hello = pkgs.hello;
@@ -16,18 +19,7 @@
                         coq
                         coqPackages.coqide
                         coqPackages.paco
-                        coqPackages.vscoq-language-server
-                        # (coqPackages.vscoq-language-server.overrideAttrs (old: let
-                        #   newSrc = pkgs.fetchFromGitHub {
-                        #     owner  = "rocq-prover";
-                        #     repo   = "vscoq";
-                        #     rev    = "v2.2.5";
-                        #     sha256 = "sha256-XyIjwem/yS7UIpQATNixgKkrMOHHs74nkAOvpU5WG1k=";
-                        #   };
-                        # in {
-                        #   version = "2.2.5";
-                        #   src = "${newSrc}/language-server";
-                        # }))
+                        coqPackages.vscoq-language-server.override
                     ];
                     shellHook = ''
                         echo Welcome to coq shell

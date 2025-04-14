@@ -119,10 +119,8 @@ Proof. apply OUT. Qed.
 
 Example comunication:
  Par (Out 1 0 Nil) (In 1 Nil) -(a_tau)> Par Nil Nil.
-Proof. 
-  apply COM12 with (P := Out 1 0 Nil) (Q := In 1 Nil) (R := Nil) (S := Nil) (n := 1) (m := 0). 
-  apply OUT. 
-  apply IN with (n := 1).
+Proof. apply COM12 with (P := Out 1 0 Nil) (Q := In 1 Nil) (R := Nil) (S := Nil) (n := 1) (m := 0). 
+  apply OUT. apply IN with (n := 1).
 Qed.
 
 Lemma fef:
