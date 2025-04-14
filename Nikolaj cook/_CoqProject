@@ -1,9 +1,1 @@
 -Q . Encoding
-
-bisimulation.v
-cbpv.v
-early_semantics_de_bruijn.v
-encoding.v
-late_semantics_de_bruijn.v
-op_correspond.v
-pi.v
