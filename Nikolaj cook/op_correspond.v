@@ -16,7 +16,7 @@ Lemma res_prefix_out : forall (P : proc) (V : value) (n m: nat) (ref : List.list
  ~(m = 0) -> (Res(Par (Out n m P) (encode_value V ref)) ~~ In n (Res(Par (P) (encode_value V ref)))).
 Proof. Admitted.
 
-Lemma pointer : forall 
+Lemma pointer : forall
   (P Q : proc) 
   (x y : nat) 
   (V : value) 
@@ -31,6 +31,24 @@ Lemma pointer : forall
   )).
 Proof. Admitted.
 
+Lemma split : forall
+  (P Q: proc)
+  (V : value)
+  (ref : List.list (nat * nat)),
+  Res (Res (Par
+    (Par (P [[shift]] [[swap]]) (Q [[shift]]))
+    (Par
+      (encode_value V (incRefs 0 1 ref) [[shift]] [[swap]])
+      (encode_value V (incRefs 0 1 ref) [[shift]])
+    )
+  )) ~~
+  Par
+    (Res (Par P (encode_value V ref)))
+    (Res (Par Q (encode_value V ref)))
+  .
+Proof.
+Admitted.
+
 Lemma res_rep : forall 
   (P : proc) 
   (V : value) 
@@ -41,8 +59,26 @@ Proof.
   cofix CH.
   intros p v r.
   apply weak_trans with 
-    (q := Res (Par (Par (Rep p) p) (encode_value v r))).
+    (q := Res (Par (Par p (Rep p)) (encode_value v r))).
   - apply weak_struct. 
+    apply con_res.
+    apply con_par.
+    * apply sg_rep.
+    * apply sg_ref.
+  - eapply weak_trans.
+    * apply pointer.
+      + exact 0.
+      + exact 1.
+    * apply weak_sym.
+      eapply weak_trans.
+      + apply weak_struct. apply sg_rep.
+      + { apply weak_sym.
+          eapply weak_trans.
+          - apply split.
+          - apply weak_par1.
+            * apply weak_reflexive.
+            * apply CH.
+        }
 Qed.
 
 Lemma sub_lemma : forall (M : term) (V : value) (u r : nat) (ref : List.list (nat * nat)),

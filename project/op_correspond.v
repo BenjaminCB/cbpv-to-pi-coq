@@ -15,11 +15,19 @@ Lemma res_prefix_out : forall (P : proc) (V : value) (n m: nat) (ref : List.list
  ~(m = 0) -> (Res(Par (Out n m P) (encode_value V ref)) ~~ In n (Res(Par (P) (encode_value V ref)))).
 Proof. Admitted.
 
-Lemma pointer : forall (P Q : proc) (x y : nat) (V : value) (ref : List.list (nat * nat)),
+Lemma pointer : forall 
+  (P Q : proc) 
+  (x y : nat) 
+  (V : value) 
+  (ref : List.list (nat * nat)),
   Res (Par (Par (P) (Q)) (encode_value V ref)) ~~ 
   Res (Res (Par 
-            (Par ((P[[shift]])[[swap]]) (Q[[shift]]) ) 
-            (Par (((encode_value V (incRefs 0 1 ref))[[shift]])[[swap]]) ((encode_value V (incRefs 0 1 ref))[[shift]])))).
+    (Par ((P[[shift]])[[swap]]) (Q[[shift]]) ) 
+    (Par 
+      (((encode_value V (incRefs 0 1 ref))[[shift]])[[swap]]) 
+      ((encode_value V (incRefs 0 1 ref))[[shift]])
+    )
+  )).
 Proof. Admitted.
 
 Lemma res_rep : forall (P : proc) (V : value) (ref : List.list (nat * nat)),
