@@ -2,7 +2,6 @@ From Encoding Require Export pi.
 From Encoding Require Export cbpv.
 From Encoding Require Export encoding.
 From Encoding Require Export bisimulation.
-Require Import Paco.paco.
 Require Import Coq.Classes.DecidableClass.
 Require Coq.Lists.List.
 Require Import Nat.
@@ -127,12 +126,16 @@ Proof. intro. intro. intro. induction H.
   split.
   + simpl. apply res_weak. apply weak_par. apply res_weak. apply H0. 
   + apply weak_res. apply weak_par1. apply weak_res. apply H0. apply weak_reflexive.
-- simpl. exists (Res (Res (Par (Par ((Rep (In 0 (In 0 (In 1 (encode s 1 0 Datatypes.nil)))))) ((encode s 1 0 Datatypes.nil)))  (Nil) ))).
-  split. apply TPRE_INTERNAL with (Res (Res
-  (Par (Rep (In 0 (In 0 (In 1 (encode s 1 0 Datatypes.nil)))))
-     (((Res (Out 1 0 (Out 0 (u + 3) (Out 0 (r + 3) Nil))))[[ 0 |> shift]] ))))). 
+- simpl. intros. exists (Res (Res (Res (Par (Par ((encode s (u+3) (r+3) Datatypes.nil)) ((Rep(In 0 (In 0 (In 1 (encode s 1 0 Datatypes.nil)))))[[shift]]))  (Nil) )))).
+  split. eapply TPRE_INTERNAL. 
   split. apply RES22. apply COM22 with (n := 0). apply BORES1. apply OUT.
   apply INB. eapply TPRE_INTERNAL.
+  split. apply RES22. apply RES22. eapply COM21. apply IBREP. apply IBPAR1. apply INB.
+  apply BORES1. apply OUT. eapply TPRE_INTERNAL.
+  split. apply RES22. apply RES22. apply RES22. eapply COM11. apply IPAR1. apply IN.
+  apply OUT. fold int_subst.
+  apply ACTION. apply RES22. apply RES22. apply RES22. eapply COM11. apply IPAR1. (** apply IN **)
+  
   
   Admitted.
 
