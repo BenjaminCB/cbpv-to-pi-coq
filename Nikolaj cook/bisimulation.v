@@ -51,7 +51,8 @@ Inductive struct_cong : proc -> proc -> Prop :=
   | sym : forall p q, struct_cong (Par p q) (Par q p)
   | sg_ref : forall p, struct_cong p p
   | sg_sym : forall p q, struct_cong p q -> struct_cong q p
-  | sg_trans : forall p q r, struct_cong p q -> struct_cong q r -> struct_cong p r.
+  | sg_trans : forall p q r, struct_cong p q -> struct_cong q r -> struct_cong p r
+  | sg_rep : forall p, struct_cong (Rep p) (Par p (Rep p)).
 
 
 

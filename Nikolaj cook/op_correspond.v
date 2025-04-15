@@ -2,6 +2,7 @@ From Encoding Require Export pi.
 From Encoding Require Export cbpv.
 From Encoding Require Export encoding.
 From Encoding Require Export bisimulation.
+Require Import Paco.paco.
 Require Import Coq.Classes.DecidableClass.
 Require Coq.Lists.List.
 Require Import Nat.
@@ -15,16 +16,34 @@ Lemma res_prefix_out : forall (P : proc) (V : value) (n m: nat) (ref : List.list
  ~(m = 0) -> (Res(Par (Out n m P) (encode_value V ref)) ~~ In n (Res(Par (P) (encode_value V ref)))).
 Proof. Admitted.
 
-Lemma pointer : forall (P Q : proc) (x y : nat) (V : value) (ref : List.list (nat * nat)),
+Lemma pointer : forall 
+  (P Q : proc) 
+  (x y : nat) 
+  (V : value) 
+  (ref : List.list (nat * nat)),
   Res (Par (Par (P) (Q)) (encode_value V ref)) ~~ 
   Res (Res (Par 
-            (Par ((P[[shift]])[[swap]]) (Q[[shift]]) ) 
-            (Par (((encode_value V (incRefs 0 1 ref))[[shift]])[[swap]]) ((encode_value V (incRefs 0 1 ref))[[shift]])))).
+    (Par ((P[[shift]])[[swap]]) (Q[[shift]]) ) 
+    (Par
+      (((encode_value V (incRefs 0 1 ref))[[shift]])[[swap]]) 
+      ((encode_value V (incRefs 0 1 ref))[[shift]])
+    )
+  )).
 Proof. Admitted.
 
-Lemma res_rep : forall (P : proc) (V : value) (ref : List.list (nat * nat)),
-Res( Par (Rep (P)) (encode_value V ref) ) ~~ Rep (Res (Par (P) (encode_value V ref))).
-Proof. Admitted.
+Lemma res_rep : forall 
+  (P : proc) 
+  (V : value) 
+  (ref : List.list (nat * nat)),
+  Res (Par (Rep (P)) (encode_value V ref) ) ~~ 
+  Rep (Res (Par (P) (encode_value V ref))).
+Proof.
+  cofix CH.
+  intros p v r.
+  apply weak_trans with 
+    (q := Res (Par (Par (Rep p) p) (encode_value v r))).
+  - apply weak_struct. 
+Qed.
 
 Lemma sub_lemma : forall (M : term) (V : value) (u r : nat) (ref : List.list (nat * nat)),
 encode (M [l[(extend_subst_lam V Var)]l]) u r ref ~~ Res ( Par ((encode M (u+1) (r+1) (incRefs 0 1 ref))) (encode_value V ref)).  
