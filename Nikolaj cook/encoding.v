@@ -36,7 +36,7 @@ Fixpoint encode (s : term) (u r : nat) (refs : List.list (nat * nat)) :=
       ))))
     ))
   | Force v => Res (Par 
-      (Res ( Out (u+2) 0(encode_value v (incRefs 0 1 refs)) ))
+      (Res ( Out (1) 0(encode_value v (incRefs 0 1 refs)) ))
       (In 0 (Res (Out 1 0 (Out 0 (u + 3) (Out 0 (r + 3) (Nil))))))
     )
   | Ret v => (Res (Out (r+1) 0 (encode_value v (incRefs 0 1 refs))))
