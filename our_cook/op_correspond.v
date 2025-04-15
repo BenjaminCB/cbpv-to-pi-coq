@@ -6,8 +6,30 @@ Require Import Coq.Classes.DecidableClass.
 Require Coq.Lists.List.
 Require Import Nat.
 Require Coq.Lists.List.
+Require Import Coq.Arith.Arith.
 
 
+Lemma DB_help: forall (p : proc), (p [[lift_subst (0 |> shift)]]) = (p [[0 |> shift]]).
+Proof. induction p. induction n.
+  -simpl. rewrite IHp. Admitted.
+  
+
+
+Lemma DB_sub0 : forall (p : proc), p = (p [[0 |> shift]]).
+Proof. intros. induction p.
+  - induction n. simpl. rewrite -> DB_help. rewrite <- IHp. reflexivity.
+  * simpl. rewrite -> DB_help. rewrite <- IHp. unfold shift. rewrite Nat.add_1_r. reflexivity.
+  - simpl. rewrite <- IHp. induction n. induction m.
+  * simpl. reflexivity. * simpl. unfold shift. rewrite Nat.add_1_r. reflexivity.
+  * induction m. simpl. unfold shift. rewrite Nat.add_1_r. reflexivity.
+  simpl. unfold shift. rewrite Nat.add_1_r. rewrite Nat.add_1_r. reflexivity.
+  - simpl. rewrite -> DB_help. rewrite <- IHp. reflexivity.
+  - simpl. rewrite <- IHp. reflexivity.
+  - simpl. rewrite <- IHp1. rewrite <- IHp2. reflexivity.
+  - simpl. reflexivity.
+Qed.
+
+ 
 Lemma res_prefix_in : forall (P : proc) (V : value) (n: nat) (ref : List.list (nat * nat)),
   Res(Par (In n P) (encode_value V ref)) ~~ In n (Res(Par (P) (encode_value V ref))).
 Proof. Admitted.
