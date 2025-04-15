@@ -48,6 +48,7 @@ Reserved Notation "P -(a_tau)> Q" (at level 70).
 Reserved Notation "P -(a_in)> n m Q" (at level 70, n at next level, m at next level, Q at next level).
 Reserved Notation "P -(a_out)> n m Q" (at level 78, n at next level, m at next level, Q at next level).
 Reserved Notation "P -(a_bout)> n Q" (at level 70).
+Reserved Notation "P -(a_inb)> n m Q" (at level 70).
  
 Inductive trans_in: proc -> nat -> nat -> proc -> Prop :=  
   | IN    (n m : nat) (P: proc): 
@@ -63,6 +64,21 @@ Inductive trans_in: proc -> nat -> nat -> proc -> Prop :=
     trans_in (Par P (Rep P)) n m Q -> trans_in (Rep P) n m Q
 
   where "P -(a_in)> n m Q" := (trans_in P n m Q).
+
+Inductive trans_inb: proc -> nat -> nat -> proc -> Prop :=  
+  | INB    (n m : nat) (P: proc): 
+    trans_inb (In n P) n m (P[[m |> shift]])
+  | IBPAR1 (n m : nat) (P Q R: proc):
+    trans_inb P n m R -> trans_inb (Par P Q) n m (Par R (Q[[shift]]))
+  | IBPAR12 (n m : nat) (P Q R: proc):
+    trans_inb Q n m R -> trans_inb (Par P Q) n m (Par (P[[shift]]) R)
+  | IBRES21 (n m : nat) (P Q : proc) :
+    trans_inb P (n + 1) (m + 1) Q -> 
+    trans_inb (Res P) n m (Res Q)
+  | IBREP   (P Q: proc) (n m : nat) : 
+    trans_inb (Par P (Rep P)) n m Q -> trans_inb (Rep P) n m Q
+
+  where "P -(a_inb)> n m Q" := (trans_inb P n m Q).
 
 Inductive trans_out: proc -> nat -> nat -> proc -> Prop :=  
   | OUT   (n m : nat) (P : proc): 
@@ -107,12 +123,12 @@ Inductive trans: proc -> proc -> Prop :=
     trans_in Q n m S ->
     trans (Par P Q) (Par R S)
   | COM21  (n : nat) (P Q R S : proc) :
-    trans_in P n 0 R ->
+    trans_inb P n 0 R ->
     trans_bout Q n S ->
     trans (Par P Q) (Res (Par R S))
   | COM22  (n : nat) (P Q R S : proc) :
     trans_bout P n R ->
-    trans_in Q n 0 S ->
+    trans_inb Q n 0 S ->
     trans (Par P Q) (Res (Par R S))
   | REP (P Q: proc) : 
     trans (Par P (Rep P)) Q -> trans (Rep P) Q

@@ -7,6 +7,7 @@ Require Coq.Lists.List.
 Require Import Nat.
 Require Coq.Lists.List.
 
+
 Lemma res_prefix_in : forall (P : proc) (V : value) (n: nat) (ref : List.list (nat * nat)),
   Res(Par (In n P) (encode_value V ref)) ~~ In n (Res(Par (P) (encode_value V ref))).
 Proof. Admitted.
@@ -58,12 +59,12 @@ Proof. intro. intro. intro. induction H.
           
              (encode_value v Datatypes.nil [[swap]]) )
        (
-          (encode s (u + 2) (r + 2)
-             ((0, 0) :: Datatypes.nil)[[0 |> id]])))))).
+          ((encode s (u + 2) (r + 2)
+             ((0, 0) :: Datatypes.nil)[[0 |> shift]]))))))).
     split.
     + apply ACTION. apply RES22. apply COM22 with (n := 0).
     * apply BORESBOUT with (n := 0). apply BORES1.  apply OUT.
-    * apply IN.
+    * apply INB with (m := 0).
     +  admit. 
   - intros. destruct (IHreduction 0 1). simpl.  exists (Res
     (Par (Res (x))
@@ -71,7 +72,12 @@ Proof. intro. intro. intro. induction H.
   split.
   + simpl. apply res_weak. apply weak_par. apply res_weak. apply H0. 
   + apply weak_res. apply weak_par1. apply weak_res. apply H0. apply weak_reflexive.
-- simpl.
+- simpl. exists (Res (Res (Par (Par ((Rep (In 0 (In 0 (In 1 (encode s 1 0 Datatypes.nil)))))) ((encode s 1 0 Datatypes.nil)))  (Nil) ))).
+  split. apply TPRE_INTERNAL with (Res (Res
+  (Par (Rep (In 0 (In 0 (In 1 (encode s 1 0 Datatypes.nil)))))
+     (((Res (Out 1 0 (Out 0 (u + 3) (Out 0 (r + 3) Nil))))[[ 0 |> shift]] ))))). 
+  split. apply RES22. apply COM22 with (n := 0). apply BORES1. apply OUT.
+  apply INB. eapply TPRE_INTERNAL.
   
   Admitted.
 
