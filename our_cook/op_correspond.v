@@ -2,11 +2,11 @@ From Encoding Require Export pi.
 From Encoding Require Export cbpv.
 From Encoding Require Export encoding.
 From Encoding Require Export bisimulation.
-Require Import Paco.paco.
 Require Import Coq.Classes.DecidableClass.
 Require Coq.Lists.List.
 Require Import Nat.
 Require Coq.Lists.List.
+Require Import Coq.Bool.Bool.
 
 
 Lemma res_prefix_in : forall (P : proc) (V : value) (n: nat) (ref : List.list (nat * nat)),
@@ -48,6 +48,13 @@ Lemma split : forall
     (Res (Par Q (encode_value V ref)))
   .
 Proof.
+  intros p q v r.
+  apply weak_struct.
+  eapply sg_trans.
+  - apply con_res. 
+    apply sg_par_res.
+    simpl.
+    apply orb_false_iff.
 Admitted.
 
 Lemma res_rep : forall 
