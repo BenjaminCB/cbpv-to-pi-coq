@@ -49,6 +49,8 @@ Definition weak_bisimulation (R : proc -> proc -> Prop) : Prop :=
 Inductive struct_cong : proc -> proc -> Prop :=
   | nil : forall p, struct_cong p (Par p Nil)
   | sym : forall p q, struct_cong (Par p q) (Par q p)
+  | con_par : forall p q r s, struct_cong p r -> struct_cong q s -> struct_cong (Par p q) (Par r s) 
+  | con_res : forall p q, struct_cong p q -> struct_cong (Res p) (Res q)
   | sg_ref : forall p, struct_cong p p
   | sg_sym : forall p q, struct_cong p q -> struct_cong q p
   | sg_trans : forall p q r, struct_cong p q -> struct_cong q r -> struct_cong p r
@@ -73,7 +75,9 @@ CoInductive weak_bisimilar : proc -> proc -> Prop :=
 | weak_reflexive : forall p, weak_bisimilar p p
 | weak_trans : forall p q r, weak_bisimilar p q -> weak_bisimilar q r -> weak_bisimilar p r
 | weak_sym : forall p q, weak_bisimilar p q -> weak_bisimilar q p
-| weak_struct : forall p q, struct_cong p q -> weak_bisimilar p q.
+| weak_struct : forall p q, struct_cong p q -> weak_bisimilar p q
+| weak_res : forall p q, weak_bisimilar p q -> weak_bisimilar (Res p) (Res q)
+| weak_par1 : forall p q r s, weak_bisimilar p r -> weak_bisimilar q s -> weak_bisimilar (Par p q) (Par r s). 
 
 Notation "p ~~ q" := (weak_bisimilar p q) (at level 84). 
 

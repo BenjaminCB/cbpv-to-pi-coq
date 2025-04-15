@@ -52,8 +52,18 @@ Proof. Admitted.
 Lemma res_weak : forall (P P': proc), P =()> P' -> Res P =()> Res P'.
 Proof. intros. induction H.
 - apply TPRE_INTERNAL with (r := Res r) (q := Res q).
- split. apply RES22. apply H. apply TPRE_INTERNAL with (q := q). destruct H. Admitted.
+ split. apply RES22. apply H. apply TPRE_INTERNAL with (q := q). destruct H. admit.
+- apply ACTION. apply RES22. apply H.
+- apply TAU.
+Admitted.
 
+Lemma weak_par : forall (P Q P': proc), P =()> P' -> Par P Q =()> Par P' Q.
+Proof. intros. induction H.
+- apply TPRE_INTERNAL with (r := Par r Q) (q := Par q Q).
+ split. apply TPAR1. apply H. apply TPRE_INTERNAL with (q := q). destruct H. admit.
+- apply ACTION. apply TPAR1. apply H.
+- apply TAU.
+Admitted.
 
 
 Theorem Sound_encoding : 
@@ -74,10 +84,13 @@ Proof. intro. intro. intro. induction H.
     * apply BORESBOUT with (n := 0). apply BORES1.  apply OUT.
     * apply IN.
     +  admit. 
-  - intros. exists (encode (Bind s' t) u r Datatypes.nil).
+  - intros. destruct (IHreduction 0 1). simpl.  exists (Res
+    (Par (Res (x))
+       (In 0 (encode t (u + 2) (r + 2) ((0, 0) :: Datatypes.nil))))).
   split.
-  + simpl. apply ACTION. apply RES22. apply TPAR1. auto. auto. 
-  apply RES22.
+  + simpl. apply res_weak. apply weak_par. apply res_weak. apply H0. 
+  + apply weak_res. apply weak_par1. apply weak_res. apply H0. apply weak_reflexive.
+- simpl.
   
   Admitted.
 
