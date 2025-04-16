@@ -32,6 +32,15 @@ Lemma pointer : forall
   )).
 Proof. Admitted.
 
+Lemma refactor_par_subst : forall
+  (P Q : proc)
+  (subst : nat -> nat),
+  Par (P[[subst]]) (Q[[subst]]) = ((Par P Q)[[subst]]).
+Proof.
+  reflexivity.
+Qed.
+
+
 Lemma split : forall
   (P Q: proc)
   (V : value)
@@ -51,10 +60,34 @@ Proof.
   intros p q v r.
   apply weak_struct.
   eapply sg_trans.
-  - apply con_res. 
-    apply sg_par_res.
-    simpl.
-    apply orb_false_iff.
+  - apply con_res.
+    apply con_res.
+    apply par_swap.
+  - eapply sg_trans.
+    * apply con_res.
+      rewrite refactor_par_subst.
+      rewrite refactor_par_subst.
+      rewrite refactor_par_subst.
+      (* need to get swap out of the way,
+       before below tactic is available *)
+      apply sg_par_res_r.
+      simpl.
+      apply orb_false_iff.
+      split.
+      + admit.
+      + admit.
+    * eapply sg_trans.
+      + { apply sg_par_res_l.
+          simpl.
+          apply orb_false_iff.
+          split.
+          - admit.
+          - admit.
+        }
+      + { apply con_par.
+          - admit.
+          - admit.
+        }
 Admitted.
 
 Lemma res_rep : forall 
