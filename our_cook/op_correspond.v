@@ -29,6 +29,8 @@ Proof. intros. induction p.
   - simpl. reflexivity.
 Qed.
 
+Lemma helper2 : forall (n : nat), extend_subst 0 (shift) n = n.
+Proof. induction n. simpl. reflexivity.  unfold shift. simpl. rewrite Nat.add_1_r. reflexivity. Qed.   
  
 Lemma res_prefix_in : forall (P : proc) (V : value) (n: nat) (ref : List.list (nat * nat)),
   Res(Par (In n P) (encode_value V ref)) ~~ In n (Res(Par (P) (encode_value V ref))).
