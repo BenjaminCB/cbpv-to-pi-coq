@@ -31,7 +31,12 @@ Qed.
 
 Lemma helper2 : forall (n : nat), extend_subst 0 (shift) n = n.
 Proof. induction n. simpl. reflexivity.  unfold shift. simpl. rewrite Nat.add_1_r. reflexivity. Qed.   
- 
+
+(** we need a lemma that is like: (encode u 0 P)[[ r |> shift]] = (encode u r)**)   
+Lemma subst_encode: forall (m : term) (n r : nat) l, ~(n = 0) -> (encode m n 0 l) [[ r |> shift]] = (encode m n r l).
+Proof. intros. induction m.
+- simpl. Admitted.
+
 Lemma res_prefix_in : forall (P : proc) (V : value) (n: nat) (ref : List.list (nat * nat)),
   Res(Par (In n P) (encode_value V ref)) ~~ In n (Res(Par (P) (encode_value V ref))).
 Proof. Admitted.
@@ -158,7 +163,7 @@ Proof. intro. intro. intro. induction H.
   apply BORES1. apply OUT. eapply TPRE_INTERNAL.
   split. apply RES22. apply RES22. apply RES22. eapply COM11. apply IPAR1. apply IN.
   apply OUT. fold int_subst.
-  apply ACTION. apply RES22. apply RES22. apply RES22. eapply COM11. apply IPAR1. (** apply IN **)
+  apply ACTION. apply RES22. apply RES22. apply RES22. eapply COM11. apply IPAR1. (**apply IN with (n := 1) (m := r+3).**)
   
   
   Admitted.
