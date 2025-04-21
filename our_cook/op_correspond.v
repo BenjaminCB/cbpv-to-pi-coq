@@ -38,9 +38,22 @@ Lemma subst_encode: forall (m : term) (n r : nat) l, ~(n = 0) -> (encode m n 0 l
 Proof. intros. induction m.
 - simpl. Admitted.
 
-Lemma res_prefix_in : forall (P : proc) (V : value) (n: nat) (ref : List.list (nat * nat)),
-  Res(Par (In n P) (encode_value V ref)) ~~ In n (Res(Par (P) (encode_value V ref))).
-Proof. Admitted.
+Lemma res_prefix_in : forall 
+  (P : proc) 
+  (V : value) 
+  (n: nat) 
+  (ref : List.list (nat * nat)),
+  n <> 0 /\
+  isReffed 0 (encode_value V ref) = false ->
+  Res(Par (In n P) (encode_value V ref)) ~~ 
+  In n (Res(Par (P) (encode_value V ref))).
+Proof.
+  cofix CH.
+  intros P V n ref [Hzero Href].
+  induction n.
+  - contradiction.
+  - 
+Qed.
 
 Lemma res_prefix_out : forall (P : proc) (V : value) (n m: nat) (ref : List.list (nat * nat)),
  ~(m = 0) -> (Res(Par (Out n m P) (encode_value V ref)) ~~ In n (Res(Par (P) (encode_value V ref)))).
@@ -100,7 +113,8 @@ Proof.
     apply con_res.
     apply par_swap.
   - eapply sg_trans.
-    * apply con_res.
+    * admit.
+      (* apply con_res.
       rewrite refactor_par_subst.
       rewrite refactor_par_subst.
       rewrite refactor_par_subst.
@@ -112,7 +126,10 @@ Proof.
       split.
       + admit.
       + admit.
-    * eapply sg_trans.
+      *)
+    * admit.
+      (* probably has the same issues as above
+      eapply sg_trans.
       + { apply sg_par_res_l.
           simpl.
           apply orb_false_iff.
@@ -124,6 +141,7 @@ Proof.
           - admit.
           - admit.
         }
+      *)
 Admitted.
 
 Lemma res_rep : forall 
@@ -158,9 +176,18 @@ Proof.
         }
 Qed.
 
-Lemma sub_lemma : forall (M : term) (V : value) (u r : nat) (ref : List.list (nat * nat)),
-encode (M [l[(extend_subst_lam V Var)]l]) u r ref ~~ Res ( Par ((encode M (u+1) (r+1) (incRefs 0 1 ref))) (encode_value V ref)).  
-Proof. Admitted.
+Lemma sub_lemma : forall
+  (M : term) 
+  (V : value) 
+  (u r : nat) 
+  (ref : List.list (nat * nat)),
+  encode (M [l[(extend_subst_lam V Var)]l]) u r ref ~~
+  Res (Par 
+    ((encode M (u+1) (r+1) (incRefs 0 1 ref))) 
+    (encode_value V ref)
+  ).
+Proof.
+Admitted.
 
 Lemma res_weak : forall (P P': proc), P =()> P' -> Res P =()> Res P'.
 Proof. intros. induction H.

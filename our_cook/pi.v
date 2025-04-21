@@ -165,6 +165,15 @@ Inductive weak_tau: proc -> proc -> Prop :=
     p =()> p
  where "P =()> Q" := (weak_tau P Q).
 
+Inductive weak_trans: proc -> action -> proc -> Prop := 
+  | WT_PRE (p q r : proc) (l : action):
+    p -(a_tau)> q /\ q =(l)> r -> p =(l)> r
+  | WT_ACTION (p q : proc) (l : action):
+    p -(l)> q -> p =(a_tau)> q
+  | WT_TAU (p : proc):
+    p =(l)> p
+ where "P =()> Q" := (weak_tau P Q).
+
 Reserved Notation "P =(a_out n m )> Q" (at level 71).
 
 Inductive weak_out: proc -> nat -> nat -> proc -> Prop := 
