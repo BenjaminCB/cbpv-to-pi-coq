@@ -1,4 +1,6 @@
 Require Import Coq.Program.Basics.
+Require Import Nat.
+Require Import Bool.
 
 Notation "f >>> g" := (compose g f) (at level 40, left associativity).
 Notation "g <<< f" := (compose g f) (at level 40, left associativity).
@@ -10,6 +12,23 @@ Inductive proc : Type :=
 | Rep (p : proc)
 | Par (p q : proc)
 | Nil.
+
+Fixpoint isReffed (n : nat) (p : proc) : bool :=
+  match p with
+  | In m q =>
+      if n =? m
+      then true
+      else isReffed (n + 1) q
+  | Out m m' q =>
+      if (n =? m) || (n =? m')
+      then true
+      else isReffed n q
+  | Res q => isReffed (n + 1) q
+  | Rep q => isReffed n q
+  | Par q q' => (isReffed n q) || (isReffed n q')
+  | Nil => false
+  end.
+
 
 Definition id (n : nat) := n.
 
