@@ -40,6 +40,13 @@ Proof.
   reflexivity.
 Qed.
 
+Lemma refactor_res_subst : forall
+  (P : proc)
+  (subst : nat -> nat),
+  Res (int_subst P (lift_subst subst)) = ((Res P)[[subst]]).
+Proof.
+  reflexivity.
+Qed.
 
 Lemma split : forall
   (P Q: proc)
