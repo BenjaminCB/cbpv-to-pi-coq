@@ -3,16 +3,18 @@ Require Import Coq.Lists.List.
 Import ListNotations.
 Require Import Nat.
 Require Import Bool.
+Require Import Coq.Relations.Relation_Operators. 
 
 Notation "f >>> g" := (compose g f) (at level 40, left associativity).
 Notation "g <<< f" := (compose g f) (at level 40, left associativity).
 
 Inductive proc : Type :=
 | In (n : nat) (p : proc)
-| Out (n m : nat) (p : proc)
+| Out (n : nat) (p : proc)
 | Res (p : proc)
 | Rep (p : proc)
 | Par (p q : proc)
+| Link (n m : nat)
 | Nil.
 
 Definition id (n : nat) := n.
@@ -38,10 +40,11 @@ Definition lift_subst (subst : nat -> nat) :=
 Fixpoint int_subst (p : proc) (subst : nat -> nat) :=
   match p with
   | In n p => In (subst n) (int_subst p (lift_subst subst))
-  | Out n m p => Out (subst n) (subst m) (int_subst p subst)
+  | Out n p => Out (subst n) (int_subst p (lift_subst subst))
   | Res p => Res (int_subst p (lift_subst subst))
   | Rep p => Rep (int_subst p subst)
   | Par p q => Par (int_subst p subst) (int_subst q subst)
+  | Link n m => Link (subst n) (subst m)
   | Nil => Nil
   end.
 
@@ -50,47 +53,34 @@ Notation "v |> subst" := (extend_subst v subst) (at level 81, left associativity
 
 Inductive act : Set :=
   | a_tau : act
-  | a_in: nat -> nat -> act
+  | a_in: nat -> act
   | a_out: nat -> act.
-
-Definition bn_act (a : act): list nat :=
+  
+Definition dual_act (a : act) := 
   match a with
-  | a_tau => []
-  | a_in _ m => [m]
-  | a_out _ => [0]
-  end.
-
-Definition n_act (a : act): list nat :=
-  match a with
-  | a_tau => []
-  | a_in n m => [n ; m]
-  | a_out n => [0]
+  | a_tau => a_tau
+  | a_in n => a_out n
+  | a_out n => a_in n
   end.
   
-  
-Fixpoint isReffed (n : nat) (p : proc) : bool :=
-  match p with
-  | In m q =>
-      if n =? m
-      then true
-      else isReffed (n + 1) q
-  | Out m m' q =>
-      if (n =? m) || (n =? m')
-      then true
-      else isReffed n q
-  | Res q => isReffed (n + 1) q
-  | Rep q => isReffed n q
-  | Par q q' => (isReffed n q) || (isReffed n q')
-  | Nil => false
+Notation "~ a ~" := (dual_act a) (at level 90, left associativity).
+
+Definition int_subst_act (a : act) (subst : nat -> nat) :=
+  match a with
+  | a_tau => a_tau
+  | a_in n => a_in (subst n)
+  | a_out n => a_out (subst n)
   end.
+  
+Notation "a (+1)" := (int_subst_act a shift) (at level 90, left associativity).
 
 Reserved Notation "P -( a )> Q" (at level 70).
 
 Inductive trans: proc -> act -> proc -> Prop := 
-  | OUT   (n m : nat) (P : proc): 
-    (Out n m P) -(a_out n)> P
-  | IN    (n m : nat) (P: proc): 
-    (In n P) -(a_in n m)> P
+  | OUT   (n : nat) (P : proc): 
+    (Out n P) -( a_out n )> P
+  | IN    (n : nat) (P: proc): 
+    (In n P) -( a_in n )> P
   | PAR_L (a : act) (P Q R : proc):
     a <> a_tau -> P -( a )> R -> Par P Q -( a )> Par R (Q[[shift]])
   | PAR_R (a : act) (P Q R : proc):
@@ -99,77 +89,88 @@ Inductive trans: proc -> act -> proc -> Prop :=
     P -( a_tau )> R -> Par P Q -( a_tau )> Par R Q
   | PAR_R_TAU (P Q R : proc):
     Q -( a_tau )> R -> Par P Q -( a_tau )> Par P R
-  
-  (*
-  | PAR1 (a : act) (n m : nat) (P Q R: proc):
-    a = a_in n m \/ a = a_tau \/ a = a_out n m ->
-    trans P a R -> trans (Par P Q) a (Par R Q)
-  | PAR12 (a : act) (n m : nat) (P Q R: proc):
-    a = a_in n m \/ a = a_tau \/ a = a_out n m ->
-    trans Q a R -> trans (Par P Q) a (Par P R)
-  | PAR2 (n : nat) (P Q R : proc):
-    trans P (a_bout n) R -> trans (Par P Q) (a_bout n) (Par R (Q[[shift]]))
-  | RES1  (n : nat) (P R : proc):
-    trans P (a_out (n + 1) 0 ) R -> trans (Res P) (a_bout n) R
-  | RES21 (a : nat -> nat -> act) (n m : nat) (P Q : proc) :
-    a = a_out \/ a = a_in ->
-    trans P (a (n + 1) (m + 1)) Q -> 
-    trans (Res P) (a n m) (Res Q)
-  | RES22 (P Q : proc) :
-    trans P (a_tau) Q -> 
-    trans (Res P) (a_tau) (Res Q)
-  | RESBOUT (n : nat) (P Q : proc) :
-    trans P (a_bout (n+1)) Q -> trans (Res P) (a_bout n) (Res (Q[[swap]]))
-  | COM11  (n m : nat) (P Q R S : proc) :
-    trans P (a_in n m) R ->
-    trans Q (a_out n m) S ->
-    trans (Par P Q) a_tau (Par (R) S)
-  | COM12  (n m : nat) (P Q R S : proc) :
-    trans P (a_out n m) R ->
-    trans Q (a_in n m) S ->
-    trans (Par P Q) a_tau (Par R (S))
-  | COM21  (n : nat) (P Q R S : proc) :
-    trans P (a_in n 0) R ->
-    trans Q (a_bout n) S ->
-    trans (Par P Q) a_tau (Res (Par R S))
-  | COM22  (n : nat) (P Q R S : proc) :
-    trans P (a_bout n) R ->
-    trans Q (a_in n 0) S ->
-    trans (Par P Q) a_tau (Res (Par R S))
-  | REP   (a : act) (P Q: proc) : 
-    trans (Par P (Rep P)) a Q -> trans (Rep P) a Q
-  *)
- 
+  | RES (a : act) (P Q : proc):
+    a <> a_tau -> P -( a (+1) )> Q -> Res P -( a )> Res (Q[[swap]])
+  | RES_TAU (P Q : proc):
+    P -( a_tau )> Q -> Res P -( a_tau )> Q
+  | COM (a : act) (n : nat) (P Q R S : proc):
+    a <> a_tau -> P -( a )> R -> Q -( ~a~ )> S -> Par P Q -( a_tau )> Res (Par P Q)
+  | REP (a : act) (P Q : proc): 
+    (Par P (Rep P)) -( a )> Q -> (Rep P) -( a )> Q
+  | LINK (n m : nat) (P : proc):
+    In n (Out (m + 1) (Link 0 1)) -( a_in n )> P -> Link n m -( a_in n )> P
+
   where "P -( a )> Q" := (trans P a Q).
+
+Definition tau_step (P Q : proc) := P -( a_tau )> Q.
+
+Notation "P -()> Q"   := (tau_step P Q) (at level 60).
+Notation "P =()> Q"  := (clos_refl_trans _ tau_step P Q) (at level 60).
 
 Reserved Notation "P =( a )> Q" (at level 70).
 
 Inductive weak_trans: proc -> act -> proc -> Prop := 
-  | PRE_INTERNAL (p q r : proc) (a : act) :
-    p -( a_tau )> q /\ q =( a )> r -> p =( a )> r
-  | ACTION (p q : proc) (a : act) :
-    p -( a )> q -> p =( a )> q
-  | POST_INTERNAL (p q r : proc) (a : act) :
-    p -( a )> q /\ q =( a_tau )> r -> p =( a )> r
-  | TAU (p : proc) :
-    p =( a_tau )> p
+  | WT_TAU (P Q : proc):
+    P =()> Q -> P =( a_tau )> Q
+  | WT_VIS (P P' Q' Q : proc) (a : act) :
+    a <> a_tau -> P =()> P' -> P' -(a)> Q' -> Q' =()> Q -> P =( a )> Q
  
   where "P =( a )> Q" := (weak_trans P a Q).
 
+Fixpoint ref_n_in_proc (n : nat) (p : proc) : bool :=
+  match p with
+  | In m q =>
+      if n =? m
+      then true
+      else ref_n_in_proc (n + 1) q
+  | Out m q =>
+      if (n =? m)
+      then true
+      else ref_n_in_proc n q
+  | Res q => ref_n_in_proc (n + 1) q
+  | Rep q => ref_n_in_proc n q
+  | Par q q' => (ref_n_in_proc n q) || (ref_n_in_proc n q')
+  | Link m m' => (n =? m) || (n =? m')
+  | Nil => false
+  end.
+  
+Reserved Notation "P === Q" (at level 70).
 
-Example comuni:
-  (Out 1 0 Nil) -(a_out 1 0)> Nil.
-Proof. apply OUT. Qed.
+Inductive struct_cong : proc -> proc -> Prop :=
+  | nil : forall p, p === (Par p Nil)
+  | sym : forall p q, (Par p q) === (Par q p)
+  | con_par : forall p q r s, p === r -> q === s -> (Par p q) === (Par r s) 
+  | con_res : forall p q, p === q -> (Res p) === (Res q)
+  | sg_ref : forall p, p === p
+  | sg_sym : forall p q, p === q -> q === p
+  | sg_trans : forall p q r, p === q -> q === r -> p === r
+  | sg_rep : forall p, (Rep p) === (Par p (Rep p))
+  | sg_par_res_r : forall p q, ref_n_in_proc 0 p = false -> (Res (Par p q)) === (Par (p[[0 |> id]]) (Res q))
+  | sg_par_res_l : forall p q, ref_n_in_proc 0 q = false -> (Res (Par p q)) === (Par (Res p) (q[[0 |> id]]))
+  | par_assoc : forall p q r, (Par (Par p q) r) === (Par p (Par q r))
+  | par_swap : forall p q r s, (Par (Par p q) (Par r s)) === (Par (Par p r) (Par q s))
 
+  where "P === Q" := (struct_cong P Q).
 
-Example comunication:
- Par (Out 1 0 Nil) (In 1 Nil) -(a_tau)> Par Nil Nil.
-Proof. apply COM12 with (P := Out 1 0 Nil) (Q := In 1 Nil) (R := Nil) (S := Nil) (n := 1) (m := 0). 
-  apply OUT. apply IN with (n := 1).
-Qed.
+Reserved Notation "P ~~ Q" (at level 70).
 
-Lemma fef:
-  forall (P Q R S : proc) (n m : nat), P-(a_out n m)> R -> Q-(a_in n m)> S -> Par Q P -(a_tau)> Par S R.
-Proof. intros. apply COM11 with (Q := P) (P := Q) (R := S) (S := R) (m := m) (n := n). apply H0. apply H.
-Qed.
+CoInductive weak_bisimilar : proc -> proc -> Prop :=
+  | wb : forall p q,
+      (forall a p',
+        p -( a )> p' ->
+        exists q',
+          q =( a )> q' /\
+          weak_bisimilar p' q') ->
+      (forall a q',
+        q -( a )> q' ->
+        exists p',
+          p =( a )> p' /\
+          weak_bisimilar p' q') ->
+      weak_bisimilar p q
+  | wb_ref : forall p, weak_bisimilar p p
+  | wb_trans : forall p q r, weak_bisimilar p q -> weak_bisimilar q r -> weak_bisimilar p r
+  | wb_sym : forall p q, weak_bisimilar p q -> weak_bisimilar q p
+  | wb_struct : forall p q, struct_cong p q -> weak_bisimilar p q
 
+  where "P ~~ Q" := (weak_bisimilar P Q).
+  
