@@ -55,8 +55,8 @@ Inductive struct_cong : proc -> proc -> Prop :=
   | sg_sym : forall p q, struct_cong p q -> struct_cong q p
   | sg_trans : forall p q r, struct_cong p q -> struct_cong q r -> struct_cong p r
   | sg_rep : forall p, struct_cong (Rep p) (Par p (Rep p))
-  | sg_par_res_r : forall p q, isReffed 0 p = false -> struct_cong (Res (Par (p[[shift]]) q)) (Par p (Res q))
-  | sg_par_res_l : forall p q, isReffed 0 q = false -> struct_cong (Res (Par p (q[[shift]]))) (Par (Res p) q)
+  | sg_par_res_r : forall p q, isReffed 0 p = false -> struct_cong (Res (Par p q)) (Par (p[[0 |> id]]) (Res q))
+  | sg_par_res_l : forall p q, isReffed 0 q = false -> struct_cong (Res (Par p q)) (Par (Res p) (q[[0 |> id]]))
   | par_assoc : forall p q r, struct_cong (Par (Par p q) r) (Par p (Par q r))
   | par_swap : forall p q r s, struct_cong (Par (Par p q) (Par r s)) (Par (Par p r) (Par q s)).
 

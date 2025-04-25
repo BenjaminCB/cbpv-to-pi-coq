@@ -90,6 +90,67 @@ Proof.
   reflexivity.
 Qed.
 
+Lemma shift_ref_zero : forall
+  (P : proc),
+  isReffed 0 (P[[shift]]) = false.
+Proof.
+Admitted.
+
+Lemma shift_swap_ref_one : forall
+  (P : proc),
+  isReffed 1 (P[[shift]][[swap]]) = false.
+Proof.
+Admitted.
+
+Lemma shift_swap_lift_extend_zero_id : forall
+  (P : proc),
+  P [[shift]] [[swap]] [[lift_subst (0 |> id)]] = P.
+Proof.
+Admitted.
+
+Lemma shift_extend_zero_id : forall
+  (P : proc),
+  P [[shift]] [[(0 |> id)]] = P.
+Proof.
+Admitted.
+
+Lemma stuff : forall
+  (P : proc)
+  (V : value)
+  (ref : List.list (nat * nat)),
+  struct_cong
+    (Res (Par 
+      (P [[shift]]) 
+      (encode_value V (incRefs 0 1 ref) [[shift]]) [[swap]]
+    )[[0 |> id]]) 
+    (Res (Par P (encode_value V ref))).
+Proof.
+  simpl.
+  intros p v ref.
+  rewrite refactor_par_subst.
+  rewrite refactor_par_subst.
+  rewrite refactor_par_subst.
+  rewrite shift_swap_lift_extend_zero_id.
+Admitted.
+
+Lemma stuff2 : forall
+  (P : proc)
+  (V : value)
+  (ref : List.list (nat * nat)),
+  struct_cong
+    (Res (Par 
+      (P [[shift]])
+      (encode_value V (incRefs 0 1 ref) [[shift]])
+    [[0 |> id]])) 
+    (Res (Par P (encode_value V ref))).
+Proof.
+  simpl.
+  intros p v ref.
+  rewrite refactor_par_subst.
+  rewrite refactor_par_subst.
+  rewrite shift_extend_zero_id. 
+Admitted.
+
 Lemma split : forall
   (P Q: proc)
   (V : value)
@@ -112,37 +173,25 @@ Proof.
   - apply con_res.
     apply con_res.
     apply par_swap.
-  - eapply sg_trans.
-    * admit.
-      (* apply con_res.
+  - rewrite refactor_par_subst.
+    eapply sg_trans.
+    * apply con_res.
+      apply sg_par_res_l.
       rewrite refactor_par_subst.
-      rewrite refactor_par_subst.
-      rewrite refactor_par_subst.
-      (* need to get swap out of the way,
-       before below tactic is available *)
-      apply sg_par_res_r.
-      simpl.
-      apply orb_false_iff.
-      split.
-      + admit.
-      + admit.
-      *)
-    * admit.
-      (* probably has the same issues as above
-      eapply sg_trans.
-      + { apply sg_par_res_l.
+      apply shift_ref_zero.
+    * eapply sg_trans.
+      + { apply sg_par_res_r.
           simpl.
           apply orb_false_iff.
           split.
-          - admit.
-          - admit.
+          - apply shift_swap_ref_one.
+          - apply shift_swap_ref_one.
         }
       + { apply con_par.
-          - admit.
-          - admit.
+          - apply stuff.
+          - apply stuff2.
         }
-      *)
-Admitted.
+Qed.
 
 Lemma res_rep : forall 
   (P : proc) 
@@ -163,7 +212,7 @@ Proof.
   - eapply weak_trans.
     * apply pointer.
       + exact 0.
-      + exact 1.
+      + exact 0.
     * apply weak_sym.
       eapply weak_trans.
       + apply weak_struct. apply sg_rep.
