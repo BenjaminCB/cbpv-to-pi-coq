@@ -81,25 +81,25 @@ with int_subst_value (v : value) (subst : nat -> value) :=
   | Thunk s => Thunk (int_subst s subst)
   end.
 
-Notation "s [l[ subst ]l]" := (int_subst s subst) (at level 90, left associativity).
-Notation "v [.[ subst ].]" := (int_subst_value v subst) (at level 90, left associativity).
+Notation "s {{ subst }}" := (int_subst s subst) (at level 90, left associativity).
+Notation "v {.{ subst }.}" := (int_subst_value v subst) (at level 90, left associativity).
 
 Definition compose_subst_int_subst
   (subst subst' : nat -> value)
   (n : nat) 
-  := (subst n)[.[subst'].].
+  := (subst n){.{subst'}.}.
 
 Reserved Notation "s --> t" (at level 70).
 
 Inductive reduction: term -> term -> Prop :=
   | BINDING_BASE (v : value) (s : term): 
-    (Bind (Ret v) s) --> (s [l[v |> Var]l])
+    (Bind (Ret v) s) --> (s {{v |> Var}})
   | BINDING_EVOLVE (s t s' : term):
     s --> s' -> (Bind s t) --> (Bind s' t)
   | FORCE_THUNK (s : term):
     (Force (Thunk s)) --> (s)
   | APPLICATION_BASE (s : term) (v : value):
-    (App (Abs s) v) -->(s [l[v |> Var]l])
+    (App (Abs s) v) -->(s {{v |> Var}})
   | APPLICATION_EVOLVE (s t : term) (v : value):
     s --> t -> (App s v) --> (App t v)
   
