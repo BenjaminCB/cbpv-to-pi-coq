@@ -19,14 +19,6 @@ Fixpoint findRef (n : nat) (refs : list (nat * nat)) :=
       else findRef n ps
   end.
 
-Fixpoint applier (constructor : proc -> proc) (n : nat) (p : proc) :=
-  match n with
-  | 0 => p
-  | S n => constructor (applier constructor n p)
-  end.
-  
-Notation "constructor ^^ n" := (applier constructor n) (at level 90, left associativity).
-
 Fixpoint encode (s : term) (u r : nat) (refs : list (nat * nat)) :=
   match s with
   | Abs s => Out u (In 0 (In 1 (In 2 (encode s 2 1 ((0,0) :: incRefs 1 4 refs)))))
@@ -44,7 +36,7 @@ Fixpoint encode (s : term) (u r : nat) (refs : list (nat * nat)) :=
       )
     )
   | Force v => (Res ^^ 2) (Par
-      (encode_value v 0 1 (incRefs 0 2 refs))
+      (encode_value v 1 0 (incRefs 0 2 refs))
       (In 1 (Out 0 (Out 0 (Out 1 (Par
         (Link 1 (u + 6))
         (Link 0 (r + 6))

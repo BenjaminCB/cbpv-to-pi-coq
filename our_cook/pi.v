@@ -92,9 +92,9 @@ Inductive trans: proc -> act -> proc -> Prop :=
   | RES (a : act) (P Q : proc):
     a <> a_tau -> P -( a (+1) )> Q -> Res P -( a )> Res (Q[[swap]])
   | RES_TAU (P Q : proc):
-    P -( a_tau )> Q -> Res P -( a_tau )> Q
+    P -( a_tau )> Q -> Res P -( a_tau )> Res Q
   | COM (a : act) (n : nat) (P Q R S : proc):
-    a <> a_tau -> P -( a )> R -> Q -( ~a~ )> S -> Par P Q -( a_tau )> Res (Par P Q)
+    a <> a_tau -> P -( a )> R -> Q -( ~a~ )> S -> Par P Q -( a_tau )> Res (Par R S)
   | REP (a : act) (P Q : proc): 
     (Par P (Rep P)) -( a )> Q -> (Rep P) -( a )> Q
   | LINK (n m : nat) (P : proc):
@@ -133,7 +133,15 @@ Fixpoint ref_n_in_proc (n : nat) (p : proc) : bool :=
   | Link m m' => (n =? m) || (n =? m')
   | Nil => false
   end.
-  
+
+Fixpoint applier (constructor : proc -> proc) (n : nat) (p : proc) :=
+  match n with
+  | 0 => p
+  | S n => constructor (applier constructor n p)
+  end.
+
+Notation "constructor ^^ n" := (applier constructor n) (at level 90, left associativity).
+
 Reserved Notation "P === Q" (at level 70).
 
 Inductive struct_cong : proc -> proc -> Prop :=
@@ -171,6 +179,11 @@ CoInductive weak_bisimilar : proc -> proc -> Prop :=
   | wb_trans : forall p q r, weak_bisimilar p q -> weak_bisimilar q r -> weak_bisimilar p r
   | wb_sym : forall p q, weak_bisimilar p q -> weak_bisimilar q p
   | wb_struct : forall p q, struct_cong p q -> weak_bisimilar p q
+  | wb_res : forall p q, weak_bisimilar p q -> weak_bisimilar (Res p) (Res q)
+  | wb_par : forall p q r s, weak_bisimilar p q -> weak_bisimilar r s -> weak_bisimilar (Par p r) (Par q s)
+  | wb_in : forall n p q, weak_bisimilar p q -> weak_bisimilar (In n p) (In n q)
+  | wb_out : forall n p q, weak_bisimilar p q -> weak_bisimilar (Out n p) (Out n q)
+  | wb_rep : forall p q, weak_bisimilar p q -> weak_bisimilar (Rep p) (Rep q)
 
   where "P ~~ Q" := (weak_bisimilar P Q).
   
