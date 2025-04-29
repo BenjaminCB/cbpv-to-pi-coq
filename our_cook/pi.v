@@ -168,7 +168,7 @@ CoInductive weak_bisimilar : proc -> proc -> Prop :=
         p -( a )> p' ->
         exists q',
           q =( a )> q' /\
-          weak_bisimilar p' q') ->
+          weak_bisimilar p' q') /\
       (forall a q',
         q -( a )> q' ->
         exists p',
