@@ -101,7 +101,6 @@ Proof.
                 simpl.
                 unfold compose, lift_subst, extend_subst, shift.
                 simpl.
-                
 Admitted.
 
 Lemma res_n_encoding:

@@ -98,7 +98,7 @@ Inductive trans: proc -> act -> proc -> Prop :=
   | REP (a : act) (P Q : proc): 
     (Par P (Rep P)) -( a )> Q -> (Rep P) -( a )> Q
   | LINK (n m : nat) (P : proc):
-    In n (Out (m + 1) (Link 0 1)) -( a_in n )> P -> Link n m -( a_in n )> P
+    Rep (In n (Out (m + 1) (Link 0 1))) -( a_in n )> P -> Link n m -( a_in n )> P
 
   where "P -( a )> Q" := (trans P a Q).
 
