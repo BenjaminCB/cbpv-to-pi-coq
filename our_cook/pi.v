@@ -260,3 +260,9 @@ Lemma wb_trans:
     p ~~ q -> q ~~ r -> p ~~ r.
 Proof.
 Admitted.
+
+Lemma wb_par:
+  forall p q r s,
+    p ~~ q -> r ~~ s -> Par p r ~~ Par q s.
+Proof.
+Admitted.

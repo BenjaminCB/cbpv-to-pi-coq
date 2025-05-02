@@ -283,6 +283,16 @@ Proof.
       (lift_subst (lift_subst (lift_subst shift)))
     with
       (Nat.iter 3 lift_subst shift).
+    (* working towards applyng link *)
+    eapply wb_trans.
+    apply wb_con with
+      (c := CRes (CRes (CRes (CRes (CRes (CRes (CRes (CRes (CRes CHole))))))))).
+    eapply wb_trans.
+    apply wb_struct.
+    apply con_par.
+    (* think there might be a problem as link requires the restriction to be moved inwards *)
+    eapply wb_par.
+    
     
 Admitted.
 
