@@ -49,7 +49,7 @@ Fixpoint int_subst (p : proc) (subst : nat -> nat) :=
   end.
 
 Notation "p [[ subst ]]" := (int_subst p subst) (at level 90, left associativity).
-Notation "v |> subst" := (extend_subst v subst) (at level 81, left associativity).
+Notation "v []> subst" := (extend_subst v subst) (at level 81, left associativity).
 
 Inductive act : Set :=
   | a_tau : act
@@ -153,8 +153,8 @@ Inductive struct_cong : proc -> proc -> Prop :=
   | sg_sym : forall p q, p === q -> q === p
   | sg_trans : forall p q r, p === q -> q === r -> p === r
   | sg_rep : forall p, (Rep p) === (Par p (Rep p))
-  | sg_par_res_r : forall p q, ref_n_in_proc 0 p = false -> (Res (Par p q)) === (Par (p[[0 |> id]]) (Res q))
-  | sg_par_res_l : forall p q, ref_n_in_proc 0 q = false -> (Res (Par p q)) === (Par (Res p) (q[[0 |> id]]))
+  | sg_par_res_r : forall p q, ref_n_in_proc 0 p = false -> (Res (Par p q)) === (Par (p[[0 []> id]]) (Res q))
+  | sg_par_res_l : forall p q, ref_n_in_proc 0 q = false -> (Res (Par p q)) === (Par (Res p) (q[[0 []> id]]))
   | par_assoc : forall p q r, (Par (Par p q) r) === (Par p (Par q r))
   | par_swap : forall p q r s, (Par (Par p q) (Par r s)) === (Par (Par p r) (Par q s))
 

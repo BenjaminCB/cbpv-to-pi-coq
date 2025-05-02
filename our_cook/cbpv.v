@@ -52,7 +52,7 @@ Definition extend_subst_lam (v : value) (subst : nat -> value) (n : nat) :=
   | S n' => subst n'
   end.
 
-Notation "v |> subst" := (extend_subst_lam v subst) (at level 81, left associativity).
+Notation "v {}> subst" := (extend_subst_lam v subst) (at level 81, left associativity).
 
 Definition compose_subst_int_rn 
   (subst : nat -> value)
@@ -93,13 +93,13 @@ Reserved Notation "s --> t" (at level 70).
 
 Inductive reduction: term -> term -> Prop :=
   | BINDING_BASE (v : value) (s : term): 
-    (Bind (Ret v) s) --> (s {{v |> Var}})
+    (Bind (Ret v) s) --> (s {{v {}> Var}})
   | BINDING_EVOLVE (s t s' : term):
     s --> s' -> (Bind s t) --> (Bind s' t)
   | FORCE_THUNK (s : term):
     (Force (Thunk s)) --> (s)
   | APPLICATION_BASE (s : term) (v : value):
-    (App (Abs s) v) -->(s {{v |> Var}})
+    (App (Abs s) v) -->(s {{v {}> Var}})
   | APPLICATION_EVOLVE (s t : term) (v : value):
     s --> t -> (App s v) --> (App t v)
   

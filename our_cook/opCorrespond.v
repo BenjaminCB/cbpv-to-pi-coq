@@ -9,6 +9,13 @@ From Encoding Require Export pi.
 From Encoding Require Export encoding.
 From Encoding Require Export lemmaResEncoding.
 
+Lemma link: 
+  forall n s u r refs,
+    Res (Par (Link 0 n) ($ s ; u ; r ; refs $ [[Nat.iter n lift_subst shift]])) ~~
+    $ s ; u ; r ; refs $.
+Proof.
+Admitted.
+
 Lemma links: forall s n m,
   (Res (Res (Par 
     (encode s 1 0 [])
@@ -181,6 +188,102 @@ Proof.
     apply substitution.
 Qed.
 
+Lemma shift_eq:
+  forall n,
+    shift n = n + 1.
+Proof.
+  reflexivity.
+Qed.
+
+Lemma lift_subst_eq: 
+  forall subst,
+    lift_subst subst = (0 []> (subst >>> shift)).
+Proof.
+  reflexivity.
+Qed.
+
+Lemma app_base_sound:
+  forall s v u r,
+    exists P,
+      ($ App (Abs s) v; u; r; [] $) =()> P /\
+      P ~~ ($ s {{v {}>Var}}; u; r; [] $).
+Proof.
+  intros s v u r.
+  exists 
+    ((Res ^^ 9) (Par
+      (Par 
+        (Link 2 (u + 9))
+        (Par (Link 1 (r + 9)) (Link 0 3))
+      )
+      (Par
+        ($ s ; 2 ; 1 ; [(0, 0)]$ [[lift_subst (lift_subst (lift_subst shift))]])
+        ($v ; []$ [[lift_subst shift]] [[shift]] [[shift]] [[shift]])
+      )
+    )).
+  split.
+  - simpl.
+    eapply rt_trans.
+    apply rt_step.
+    repeat (apply RES_TAU).
+    apply COM with (a := a_in 3).
+    discriminate.
+    apply IN.
+    apply PAR_L.
+    discriminate.
+    apply OUT.
+    
+    eapply rt_trans.
+    apply rt_step.
+    repeat (apply RES_TAU).
+    apply COM with (a := a_in 2).
+    discriminate.
+    apply IN.
+    apply PAR_R.
+    discriminate.
+    simpl.
+    rewrite shift_eq.
+    apply OUT.
+    
+    eapply rt_trans.
+    apply rt_step.
+    repeat (apply RES_TAU).
+    apply COM with (a := a_out 1).
+    discriminate.
+    apply OUT.
+    apply PAR_L.
+    discriminate.
+    simpl.
+    apply IN.
+    
+    eapply rt_trans.
+    apply rt_step.
+    repeat (apply RES_TAU).
+    apply COM with (a := a_out 2).
+    discriminate.
+    apply OUT.
+    apply PAR_L.
+    discriminate.
+    apply IN.
+    
+    eapply rt_trans.
+    apply rt_step.
+    repeat (apply RES_TAU).
+    apply COM with (a := a_out 3).
+    discriminate.
+    apply OUT.
+    apply PAR_L.
+    discriminate.
+    apply IN.
+    
+    apply rt_refl.
+
+  - change
+      (lift_subst (lift_subst (lift_subst shift)))
+    with
+      (Nat.iter 3 lift_subst shift).
+    
+Admitted.
+
 Theorem sound: forall s t, 
   s --> t -> 
   forall u r,
@@ -192,7 +295,7 @@ Proof.
   - apply bind_base_sound.
   - simpl. admit.
   - apply force_thunk_sound.
-  - admit.
+  - apply app_base_sound.
   - admit.
 Admitted.
 
