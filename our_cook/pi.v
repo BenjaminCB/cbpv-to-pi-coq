@@ -93,7 +93,7 @@ Inductive trans: proc -> act -> proc -> Prop :=
     a <> a_tau -> P -( a (+1) )> Q -> Res P -( a )> Res (Q[[swap]])
   | RES_TAU (P Q : proc):
     P -( a_tau )> Q -> Res P -( a_tau )> Res Q
-  | COM (a : act) (n : nat) (P Q R S : proc):
+  | COM (a : act) (P Q R S : proc):
     a <> a_tau -> P -( a )> R -> Q -( ~a~ )> S -> Par P Q -( a_tau )> Res (Par R S)
   | REP (a : act) (P Q : proc): 
     (Par P (Rep P)) -( a )> Q -> (Rep P) -( a )> Q

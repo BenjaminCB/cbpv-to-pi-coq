@@ -21,6 +21,13 @@ Lemma links: forall s n m,
 Proof.
 Admitted.
 
+Lemma substitution:
+  forall s v u r refs,
+    Res (Par ($ v ; refs $) ($ s ; (u + 1) ; (r + 1) ; refs $)) ~~
+    $ (s {{ extend_subst_lam v Var }}) ; u ; r ; refs$.
+Proof.
+Admitted.
+
 Lemma rmIsolatedProc: forall s u r,
   (Res ^^ 6)
     (Par
@@ -62,7 +69,6 @@ Proof.
       (a := a_out 1)
       (R := Rep (In 0 (In 0 (In 1 (encode s 1 0 [])))))
       (S := Out 0 (Out 0 (Out 1 (Par (Link 1 (u + 6)) (Link 0 (r + 6)))))).
-    exact 0.
     discriminate.
     apply OUT.
     apply IN.
@@ -77,7 +83,6 @@ Proof.
         (Rep (In 0 (In 0 (In 1 (encode s 1 0 [])))) [[shift]])
       )
       (S := Out 0 (Out 1 (Par (Link 1 (u + 6)) (Link 0 (r + 6))))).
-    exact 0.
     discriminate.
     apply REP.
     eapply PAR_L.
@@ -96,7 +101,6 @@ Proof.
         (Rep (In 0 (In 0 (In 1 (encode s 1 0 [])))) [[shift]] [[shift]])
       )
       (S := Out 1 (Par (Link 1 (u + 6)) (Link 0 (r + 6)))).
-    exact 0.
     discriminate.
     apply PAR_L.
     discriminate.
@@ -114,7 +118,6 @@ Proof.
         (Rep (In 0 (In 0 (In 1 (encode s 1 0 [])))) [[shift]] [[shift]] [[shift]])
       )
       (S := Par (Link 1 (u + 6)) (Link 0 (r + 6))).
-    exact 0.
     discriminate.
     apply PAR_L.
     discriminate.
@@ -122,6 +125,7 @@ Proof.
     apply OUT.
     
     apply rt_refl.
+    
   - eapply wb_trans.
     apply rmIsolatedProc.
     eapply wb_trans.
@@ -133,21 +137,49 @@ Proof.
     apply res_n_encoding.
 Qed.
 
+Lemma encode_value_eq :
+  forall v refs,
+    encode_value v refs = $ v ; refs $.
+Proof.
+  reflexivity.
+Qed.
+
+Lemma pointer_eq t :
+  pointer t = Rep (In 0 (In 0 (In 1 t))).
+Proof.
+  reflexivity.
+Qed.
+
+Lemma rmUnreffedRestrictions:
+  forall s v u r,
+    (Res ^^ 3) (Par ($ v; [] $) ($ s; u + 3; r + 3; [] $)) ~~
+    (Res (Par ($ v; [] $) ($ s; u + 1; r + 1; [] $))).
+Proof.
+Admitted.
+
 Lemma bind_base_sound : 
   forall s v u r,
     exists P,
       encode (Bind (Ret v) s) u r [] =()> P /\
       P ~~ encode (s {{extend_subst_lam v Var}}) u r [].
 Proof.
-  intros s u v r.
-  exists Nil.
+  intros s v u r.
+  exists 
+    ((Res ^^ 3) (Par ($ v; [] $) (encode s (u + 3) (r + 3) []))).
   split.
   - simpl.
     eapply rt_trans.
     apply rt_step.
-    apply RES_TAU.
-    apply RES_TAU.
-Admitted.
+    repeat (apply RES_TAU).
+    eapply COM with (a := a_out 0).
+    discriminate.
+    apply OUT.
+    apply IN.
+    apply rt_refl.
+  - eapply wb_trans.
+    apply rmUnreffedRestrictions.
+    apply substitution.
+Qed.
 
 Theorem sound: forall s t, 
   s --> t -> 
