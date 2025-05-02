@@ -17,6 +17,27 @@ Inductive proc : Type :=
 | Link (n m : nat)
 | Nil.
 
+
+Inductive context : Type :=
+| CHole 
+| CIn (n : nat) (c : context)
+| COut (n : nat) (c : context)
+| CRes (c : context)
+| CRep (c : context)
+| CParL (c : context) (p : proc)
+| CParR (p : proc) (c : context).
+
+Fixpoint plug (c : context) (p : proc) :=
+  match c with
+  | CHole => p
+  | CIn n c' => In n (plug c' p)
+  | COut n c' => Out n (plug c' p)
+  | CRes c' => Res (plug c' p)
+  | CRep c' => Rep (plug c' p)
+  | CParL c' p' => Par (plug c' p) p'
+  | CParR p' c' => Par p' (plug c' p)
+  end.
+
 Definition id (n : nat) := n.
 
 Definition shift (n : nat) := n + 1.
@@ -175,15 +196,67 @@ CoInductive weak_bisimilar : proc -> proc -> Prop :=
           p =( a )> p' /\
           weak_bisimilar p' q') ->
       weak_bisimilar p q
-  | wb_ref : forall p, weak_bisimilar p p
-  | wb_trans : forall p q r, weak_bisimilar p q -> weak_bisimilar q r -> weak_bisimilar p r
-  | wb_sym : forall p q, weak_bisimilar p q -> weak_bisimilar q p
   | wb_struct : forall p q, struct_cong p q -> weak_bisimilar p q
-  | wb_res : forall p q, weak_bisimilar p q -> weak_bisimilar (Res p) (Res q)
-  | wb_par : forall p q r s, weak_bisimilar p q -> weak_bisimilar r s -> weak_bisimilar (Par p r) (Par q s)
-  | wb_in : forall n p q, weak_bisimilar p q -> weak_bisimilar (In n p) (In n q)
-  | wb_out : forall n p q, weak_bisimilar p q -> weak_bisimilar (Out n p) (Out n q)
-  | wb_rep : forall p q, weak_bisimilar p q -> weak_bisimilar (Rep p) (Rep q)
+  | wb_con : forall c p q, weak_bisimilar p q -> weak_bisimilar (plug c p) (plug c q)
 
   where "P ~~ Q" := (weak_bisimilar P Q).
   
+Lemma wb_ref:
+  forall p, 
+    p ~~ p.
+Proof.
+  cofix CH.
+  intros p.
+  apply wb.
+  split.
+  - intros a p' Htrans.
+    exists p'.
+    split.
+    destruct a.
+    apply WT_TAU.
+    apply rt_step.
+    apply Htrans.
+    eapply WT_VIS.
+    discriminate.
+    apply rt_refl.
+    apply Htrans.
+    apply rt_refl.
+    eapply WT_VIS.
+    discriminate.
+    apply rt_refl.
+    apply Htrans.
+    apply rt_refl.
+    apply CH.
+  - intros a p' Htrans.
+    exists p'.
+    split.
+    destruct a.
+    apply WT_TAU.
+    apply rt_step.
+    apply Htrans.
+    eapply WT_VIS.
+    discriminate.
+    apply rt_refl.
+    apply Htrans.
+    apply rt_refl.
+    eapply WT_VIS.
+    discriminate.
+    apply rt_refl.
+    apply Htrans.
+    apply rt_refl.
+    apply CH.
+Qed.
+
+Lemma wb_sym:
+  forall p q,
+    p ~~ q -> q ~~ p.
+Proof.
+  cofix CH.
+  intros p q Hbisim.
+Admitted.
+
+Lemma wb_trans:
+  forall p q r,
+    p ~~ q -> q ~~ r -> p ~~ r.
+Proof.
+Admitted.

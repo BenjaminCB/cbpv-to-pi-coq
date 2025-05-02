@@ -94,7 +94,7 @@ Proof.
     * simpl.
       replace (u + S n) with ((u + 1) + n) by lia.
       replace (r + S n) with ((r + 1) + n) by lia.
-      apply wb_res.
+      apply wb_con with (c := CRes (CHole)).
       apply IHn.
     * apply res_encoding.
 Qed.

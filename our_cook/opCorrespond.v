@@ -136,10 +136,12 @@ Proof.
   - eapply wb_trans.
     apply rmIsolatedProc.
     eapply wb_trans.
-    do 4 (apply wb_res).
+    apply wb_con with 
+      (c := CRes (CRes (CRes (CRes CHole)))).
     replace (u + 6) with ((u + 4) + 2) by lia.
     replace (r + 6) with ((r + 4) + 2) by lia.
     apply links.
+    simpl.
     fold ((Res ^^ 4) (encode s (u + 4) (r + 4) [])).
     apply res_n_encoding.
 Qed.
