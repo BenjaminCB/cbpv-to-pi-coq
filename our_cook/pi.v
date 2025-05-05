@@ -253,7 +253,35 @@ Lemma wb_sym:
 Proof.
   cofix CH.
   intros p q Hbisim.
-Admitted.
+  inversion Hbisim.
+  destruct H as [Hpq Hqp].
+  
+  apply wb.
+  split.
+  intros a p' Htrans.
+  destruct (Hqp _ _ Htrans) as [r [HqStep HqBisim] ].
+  exists r.
+  split.
+  apply HqStep.
+  apply CH.
+  apply HqBisim.
+  intros a p' Htrans.
+  destruct (Hpq _ _ Htrans) as [r [HqStep HqBisim] ].
+  exists r.
+  split.
+  apply HqStep.
+  apply CH.
+  apply HqBisim.
+  
+  (* unguarded i think *)
+  apply CH.
+  apply Hbisim.
+  
+  apply wb_con.
+  apply CH.
+  apply H.
+Qed.
+
 
 Lemma wb_trans:
   forall p q r,
