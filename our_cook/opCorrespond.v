@@ -9,22 +9,22 @@ From Encoding Require Export pi.
 From Encoding Require Export encoding.
 From Encoding Require Export lemmaResEncoding.
 
-Lemma link: 
+Lemma link_lift: 
   forall n s u r refs,
-    Res (Par (Link 0 n) ($ s ; u ; r ; refs $ [[Nat.iter n lift_subst shift]])) ~~
+    Res (Par (Link 0 n) ($ s ; u + 1 ; r + 1 ; refs $ [[Nat.iter n lift_subst shift]])) ~~
     $ s ; u ; r ; refs $.
 Proof.
 Admitted.
 
-Lemma links: forall s n m,
+Lemma link_handlers: forall s n m refs,
   (Res (Res (Par 
-    (encode s 1 0 [])
+    (encode s 1 0 refs)
     (Par
       (Link 1 (n + 2))
       (Link 0 (m + 2))
     )
   ))) ~~
-  (encode s n m []).
+  (encode s n m refs).
 Proof.
 Admitted.
 
@@ -140,7 +140,7 @@ Proof.
       (c := CRes (CRes (CRes (CRes CHole)))).
     replace (u + 6) with ((u + 4) + 2) by lia.
     replace (r + 6) with ((r + 4) + 2) by lia.
-    apply links.
+    apply link_handlers.
     simpl.
     fold ((Res ^^ 4) (encode s (u + 4) (r + 4) [])).
     apply res_n_encoding.
@@ -203,6 +203,47 @@ Lemma lift_subst_eq:
 Proof.
   reflexivity.
 Qed.
+
+Lemma ref_n_in_proc_0_shift:
+  forall p, ref_n_in_proc 0 (p[[shift]]) = false.
+Proof.
+  intros p.
+  induction p.
+Admitted.
+
+Lemma shift_extend_id_n:
+  forall n, (0 []> id) (shift n) = n.
+Proof.
+  intros n.
+  induction n.
+  reflexivity.
+  simpl.
+  replace (n + 1) with (S n) by lia.
+  unfold id.
+  reflexivity.
+Qed.
+
+Lemma shift_extend_id_proc: 
+  forall p, (p [[shift]] [[0 []> id]]) = p.
+Proof.
+  intros.
+  induction p.
+  simpl.
+  rewrite shift_extend_id_n.
+Admitted.
+
+Lemma we_need_this_but_is_hard:
+  forall s v u r,
+    Res (Par 
+      ($ v; [] $ [[lift_subst shift]])
+      ($ s; u + 1; r + 1; [(0, 0)] $)
+    ) ~~
+    Res (Par 
+      ($ v; [] $)
+      ($ s; u; r; [(0, 0)] $)
+    ).
+Proof.
+Admitted.
 
 Lemma app_base_sound:
   forall s v u r,
@@ -286,12 +327,102 @@ Proof.
     (* working towards applyng link *)
     eapply wb_trans.
     apply wb_con with
-      (c := CRes (CRes (CRes (CRes (CRes (CRes (CRes (CRes (CRes CHole))))))))).
+      (c := (CRes (CRes (CRes (CRes (CRes (CRes (CRes (CRes CHole))))))))).
     eapply wb_trans.
     apply wb_struct.
+    apply con_res.
     apply con_par.
-    (* think there might be a problem as link requires the restriction to be moved inwards *)
-    eapply wb_par.
+    apply sym.
+    apply sg_ref.
+    eapply wb_trans.
+    apply wb_struct.
+    apply con_res.
+    apply con_par.
+    apply con_par.
+    apply sym.
+    apply sg_ref.
+    apply sg_ref.
+    eapply wb_trans.
+    apply wb_struct.
+    apply con_res.
+    apply con_par.
+    apply par_assoc.
+    apply sg_ref.
+    eapply wb_trans.
+    apply wb_struct.
+    apply con_res.
+    apply par_swap.
+    eapply wb_trans.
+    apply wb_struct.
+    apply sg_par_res_l.
+    replace (u + 9) with (9 + u) by lia.
+    replace (r + 9) with (9 + r) by lia.
+    simpl.
+    apply ref_n_in_proc_0_shift.
+    apply wb_par.
+    replace 1 with (0 + 1) by lia.
+    replace (S (0 + 1)) with (1 + 1) by lia.
+    apply link_lift.
+    apply wb_ref.
+    simpl.
+    
+    eapply wb_trans.
+    apply wb_con with
+      (c := (CRes (CRes (CRes (CRes (CRes (CRes CHole))))))).
+    eapply wb_trans.
+    apply wb_struct.
+    repeat (apply con_res).
+    eapply sg_trans.
+    apply con_par.
+    apply sg_ref.
+    apply sym.
+    eapply sg_trans.
+    apply sym.
+    apply par_assoc.
+    eapply wb_trans.
+    apply wb_struct.
+    eapply sg_trans.
+    apply con_res.
+    apply sg_par_res_r.
+    rewrite shift_extend_id_proc.
+    apply ref_n_in_proc_0_shift.
+    apply sg_par_res_r.
+    repeat (rewrite shift_extend_id_proc).
+    apply ref_n_in_proc_0_shift.
+    apply wb_par.
+    apply wb_ref.
+    eapply wb_trans.
+    apply wb_struct.
+    repeat (apply con_res).
+    eapply sg_trans.
+    apply sym.
+    apply con_par.
+    apply sg_ref.
+    apply sym.
+    replace (u + 9) with (1 + (u + 6) + 2) by lia.
+    replace (r + 9) with (1 + (r + 6) + 2) by lia.
+    simpl.
+    unfold id.
+    apply link_handlers.
+    simpl.
+    repeat (rewrite shift_extend_id_proc).
+    
+    eapply wb_trans.
+    apply wb_con with
+      (c := (CRes (CRes (CRes (CRes (CRes CHole)))))).
+    replace (u + 6) with ((u + 5) + 1) by lia.
+    replace (r + 6) with ((r + 5) + 1) by lia.
+    apply we_need_this_but_is_hard.
+    simpl.
+    
+    eapply wb_trans.
+    apply wb_con with
+      (c := (CRes (CRes (CRes (CRes (CRes CHole)))))).
+    replace (u + 5) with ((u + 4) + 1) by lia.
+    replace (r + 5) with ((r + 4) + 1) by lia.
+    apply substitution.
+    
+    
     
     
 Admitted.
