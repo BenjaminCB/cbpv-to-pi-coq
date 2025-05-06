@@ -68,6 +68,10 @@ Proof.
                 discriminate.
                 apply rt_refl.
                 apply OUT.
+                unfold pointer.
+                
+ Admitted.
+ (*
                 apply rt_refl.
               + inversion Htrans.
                 subst.
@@ -77,6 +81,7 @@ Proof.
                 unfold compose, lift_subst, extend_subst, shift.
                 simpl.
 Admitted.
+*)
 
 Lemma res_n_encoding:
 forall n s u r,

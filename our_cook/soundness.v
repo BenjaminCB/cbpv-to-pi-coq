@@ -29,9 +29,9 @@ Proof.
 Admitted.
 
 Lemma substitution:
-  forall s v u r refs,
-    Res (Par ($ v ; refs $) ($ s ; (u + 1) ; (r + 1) ; refs $)) ~~
-    $ (s {{ extend_subst_lam v Var }}) ; u ; r ; refs$.
+  forall s v u r,
+    Res (Par ($ v ; [] $) ($ s ; (u + 1) ; (r + 1) ; [(0,0)] $)) ~~
+    $ (s {{ extend_subst_lam v Var }}) ; u ; r ; []$.
 Proof.
 Admitted.
 
@@ -161,8 +161,8 @@ Qed.
 
 Lemma rmUnreffedRestrictions:
   forall s v u r,
-    (Res ^^ 3) (Par ($ v; [] $) ($ s; u + 3; r + 3; [] $)) ~~
-    (Res (Par ($ v; [] $) ($ s; u + 1; r + 1; [] $))).
+    (Res ^^ 3) (Par ($ v; [] $) ($ s; u + 3; r + 3; [(0,0)] $)) ~~
+    (Res (Par ($ v; [] $) ($ s; u + 1; r + 1; [(0,0)] $))).
 Proof.
 Admitted.
 
@@ -174,7 +174,7 @@ Lemma bind_base_sound :
 Proof.
   intros s v u r.
   exists 
-    ((Res ^^ 3) (Par ($ v; [] $) (encode s (u + 3) (r + 3) []))).
+    ((Res ^^ 3) (Par ($ v; [] $) (encode s (u + 3) (r + 3) [(0,0)]))).
   split.
   - simpl.
     eapply rt_trans.
@@ -422,9 +422,6 @@ Proof.
     replace (r + 5) with ((r + 4) + 1) by lia.
     apply substitution.
     
-    
-    
-    
 Admitted.
 
 Theorem sound: forall s t, 
@@ -440,11 +437,4 @@ Proof.
   - apply force_thunk_sound.
   - apply app_base_sound.
   - admit.
-Admitted.
-
-Theorem complete: forall s P u r, 
-  (encode s u r []) -( a_tau )> P -> 
-  exists P' t,
-    P =()> P' /\ (P' ~~ encode t u r []) /\ (s --> t \/ s = t).
-Proof.
 Admitted.
