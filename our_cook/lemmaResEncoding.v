@@ -40,42 +40,87 @@ Proof.
 Qed.
 Hint Rewrite lift_swap_0 lift_swap_1 lift_swap_2 lift_swap_ge : subst.
 
+Lemma res_step_equals:
+  forall n v p',
+    Res (Out (n + 1) ($ v; [] $)) -( a_out n )> p' ->
+    p' = Res ($ v; [] $ [[swap]]).
+Proof.
+Admitted.
+
+Lemma res_swap_encode_value:
+  forall v,
+    Res ($ v ; [] $ [[swap]]) ~~ $ v ; [] $.
+Proof.
+Admitted.
+
+Lemma res_encoding_value:
+  forall v u r,
+    Res ($ Val v; u + 1; r + 1; [] $) ~~
+    ($ Val v; u; r; [] $).
+Proof.
+  cofix CH.
+  intros v u r.
+  simpl.
+  apply wb.
+  split.
+  
+  (* bisim first clause *)
+  intros a.
+  destruct a.
+  
+  (* tau *)
+  intros p' Hstep.
+  inversion Hstep.
+  contradiction.
+  inversion H0.
+  
+  (* in *)
+  intros p' Hstep.
+  inversion Hstep.
+  inversion H1.
+  
+  (* out n and n = u *)
+  destruct (Nat.eq_dec u n).
+  intros p' Hstep.
+  subst.
+  
+  subst.
+  exists ($ v; [] $).
+  split.
+  
+  (* transition *)
+  eapply WT_VIS.
+  discriminate.
+  apply rt_refl.
+  apply OUT.
+  apply rt_refl.
+  eapply res_step_equals in Hstep.
+  inversion Hstep.
+  
+  (* further bisim *)
+  apply res_swap_encode_value.
+  
+  (* out n and n <> u *)
+  intros p' Hstep.
+  inversion Hstep.
+  inversion H1.
+  unfold shift in H7.
+  replace (u + 1) with (S u) in H7 by lia.
+  replace (n + 1) with (S n) in H7 by lia.
+  apply Nat.succ_inj in H7.
+  contradiction.
+  
+  (* bisim second clause *)
+Admitted.
+
 Lemma res_encoding: forall s u r,
   (Res (encode s (u + 1) (r + 1) [])) ~~ (encode s u r []).
 Proof.
   cofix CH.
   intros s.
   induction s.
-  - induction v.
-    intros u r.
-    simpl.
-    apply wb.
-    split.
-    
-    split_on_a_out u.
-    intros p' Htrans.
-    inversion Htrans.
-    contradiction.
-    inversion H0.
-    intros p' Htrans.
-    inversion Htrans.
-    inversion H1.
-    intros p' Htrans.
-    eexists. 
-    split.
-    eapply WT_VIS.
-    discriminate.
-    apply rt_refl.
-    apply OUT.
-    unfold pointer.
-    apply rt_refl.
-    inversion Htrans.
-    subst.
-    inversion H1.
-    subst.
-    simpl.
-    unfold compose, lift_subst, extend_subst, shift.
-    simpl.
+  - apply res_encoding_value.
+  - admit.
 Admitted.
 
 Lemma res_n_encoding:
