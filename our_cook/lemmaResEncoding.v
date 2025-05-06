@@ -47,41 +47,36 @@ Proof.
   intros s.
   induction s.
   - induction v.
-    * intros u r.
-      simpl.
-      apply wb.
-      split.
-      + { split_on_a_out u.
-          - intros p' Htrans.
-            inversion Htrans.
-            contradiction.
-            inversion H0.
-          - intros p' Htrans.
-            inversion Htrans.
-            inversion H1.
-          - intros p' Htrans.
-            exists 
-                (Rep (In 0 (In 0 (In 1 (In (n + 4)
-                  (In 0 (In 1 (Par (Link 1 4) (Link 0 3))))))))).
-              split.
-              + eapply WT_VIS.
-                discriminate.
-                apply rt_refl.
-                apply OUT.
-                unfold pointer.
-                
- Admitted.
- (*
-                apply rt_refl.
-              + inversion Htrans.
-                subst.
-                inversion H1.
-                subst.
-                simpl.
-                unfold compose, lift_subst, extend_subst, shift.
-                simpl.
+    intros u r.
+    simpl.
+    apply wb.
+    split.
+    
+    split_on_a_out u.
+    intros p' Htrans.
+    inversion Htrans.
+    contradiction.
+    inversion H0.
+    intros p' Htrans.
+    inversion Htrans.
+    inversion H1.
+    intros p' Htrans.
+    eexists. 
+    split.
+    eapply WT_VIS.
+    discriminate.
+    apply rt_refl.
+    apply OUT.
+    unfold pointer.
+    apply rt_refl.
+    inversion Htrans.
+    subst.
+    inversion H1.
+    subst.
+    simpl.
+    unfold compose, lift_subst, extend_subst, shift.
+    simpl.
 Admitted.
-*)
 
 Lemma res_n_encoding:
 forall n s u r,
