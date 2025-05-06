@@ -238,7 +238,7 @@ Lemma we_need_this_but_is_hard:
       ($ v; [] $ [[lift_subst shift]])
       ($ s; u + 1; r + 1; [(0, 0)] $)
     ) ~~
-    Res (Par 
+    (Par 
       ($ v; [] $)
       ($ s; u; r; [(0, 0)] $)
     ).
@@ -417,11 +417,47 @@ Proof.
     
     eapply wb_trans.
     apply wb_con with
-      (c := (CRes (CRes (CRes (CRes (CRes CHole)))))).
+      (c := (CRes (CRes (CRes (CRes CHole))))).
     replace (u + 5) with ((u + 4) + 1) by lia.
     replace (r + 5) with ((r + 4) + 1) by lia.
     apply substitution.
+    simpl.
     
+    eapply wb_trans.
+    change
+      (Res (Res (Res (Res ($ s {{v {}>Var}}; u + 4; r + 4; [] $)))))
+    with
+      ((Res ^^ 4) ($ s {{v {}>Var}}; u + 4; r + 4; [] $)).
+    apply res_n_encoding with (n := 4).
+    
+    apply wb_ref.
+Qed.
+
+Lemma context_weak_transition_1:
+  forall p q r,
+    p =()> q ->
+    Res (Res (Par p r)) =()> Res (Res (Par q r)).
+Proof.
+Admitted.
+
+Lemma context_weak_transition_2:
+  forall p q r s,
+    p =()> q ->
+    (Res (Res (Res (Res (Par 
+      (r)
+      (Par
+        (p)
+        (s)
+      )
+    ))))) =()>
+    (Res (Res (Res (Res (Par 
+      (r)
+      (Par
+        (q)
+        (s)
+      )
+    ))))).
+Proof.
 Admitted.
 
 Theorem sound: forall s t, 
@@ -433,8 +469,54 @@ Proof.
   intros s t Hred.
   induction Hred.
   - apply bind_base_sound.
-  - simpl. admit.
+  - intros u r.
+    destruct (IHHred 1 0) as [ P [ Hstep Hsim ] ].
+    exists 
+      (Res (Res (Par 
+        (P) 
+        (In 0 ($ t; u + 3; r + 3; [(0, 0)] $)
+      )))).
+    simpl.
+    split.
+    
+    apply context_weak_transition_1.
+    apply Hstep.
+    
+    eapply wb_trans.
+    apply wb_con with 
+      (c := (CRes (CRes (CParL
+        (CHole)
+        (In 0 ($ t; u + 3; r + 3; [(0, 0)] $))
+      )))).
+    apply Hsim.
+    simpl.
+    
+    apply wb_ref.
+    
   - apply force_thunk_sound.
   - apply app_base_sound.
-  - admit.
-Admitted.
+  - intros u r.
+    destruct (IHHred 3 2) as [ P [ Hstep Hsim ] ].
+    eexists.
+    simpl.
+    split.
+    
+    apply context_weak_transition_2.
+    apply Hstep.
+    
+    apply wb_con with 
+      (c := (CRes (CRes (CRes (CRes (CParR 
+        (In 3 (In 2 (Out 1 (Out 2 (Out 3 (Par 
+          (Link 2 (u + 9))
+          (Par 
+            (Link 1 (r + 9)) 
+            (Link 0 3)
+          )
+        ))))))
+        (CParL
+          CHole
+          (Out 1 ($ v; [] $))
+        ) 
+      )))))).
+    apply Hsim.
+Qed.
