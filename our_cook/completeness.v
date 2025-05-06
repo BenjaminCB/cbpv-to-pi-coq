@@ -21,7 +21,6 @@ Proof.
   intros.
   inversion H.
 Admitted.
-
 Lemma force_complete: forall P v u r,
   ($ Force v; u; r; [] $) -( a_tau )> P ->
     exists P' t,
@@ -31,7 +30,17 @@ Lemma force_complete: forall P v u r,
 Proof.
   intros.
   inversion H.
-  eexists. eexists. (*exists P, (Force v).*)
+  congruence.
+  destruct v.
+  set (t := HELP).  (* a term *)
+  set (P' := ($ t; u; r; [] $)).                                (* a proc *)
+  exists ($ t; u; r; [] $), t.
+  
+  split.
+  destruct H3.
+  admit.
+  exists ($ t; u; r; [] $), t.
+  exists P. encode (Force (Thunk P)) u r [].
 
   split. destruct H4.
   apply rt_refl.
