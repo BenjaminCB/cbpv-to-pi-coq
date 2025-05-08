@@ -67,7 +67,17 @@ Proof.
   apply wb_ref.
   
   intros.
+(*Muligvis ikke freskridt herfra*)
   simpl.
+  eexists.
+  split.
+  destruct a. 
+  apply WT_TAU.
+  apply rt_step.
+  unfold tau_step.
+  apply Hstep.
+  admit. admit.
+
   admit.
 
   left. apply FORCE_THUNK.
@@ -87,7 +97,12 @@ Proof.
   intros.
   inversion H. congruence.
   destruct H5.
+  eexists. eexists.
+  split.
+  admit.
   
+  split.
+  admit.
 Admitted.
 
 
