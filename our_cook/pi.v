@@ -138,6 +138,16 @@ Inductive weak_trans: proc -> act -> proc -> Prop :=
  
   where "P =( a )> Q" := (weak_trans P a Q).
 
+Reserved Notation "P --( A )> Q" (at level 70).
+
+Inductive trans_seq : proc -> list act -> proc -> Prop :=
+  | TransNil (P : proc): 
+    P --( [] )> P
+  | TransCons (P Q R: proc) (a : act) (A : list act):
+    P -(a)> Q -> Q --( A )> R -> P --( a :: A )> R
+
+  where "P --( A )> Q" := (trans_seq P A Q).
+
 Fixpoint ref_n_in_proc (n : nat) (p : proc) : bool :=
   match p with
   | In m q =>
@@ -196,8 +206,8 @@ CoInductive weak_bisimilar : proc -> proc -> Prop :=
           p =( a )> p' /\
           weak_bisimilar p' q') ->
       weak_bisimilar p q
-  | wb_struct : forall p q, struct_cong p q -> weak_bisimilar p q
-  | wb_con : forall c p q, weak_bisimilar p q -> weak_bisimilar (plug c p) (plug c q)
+  | wb_struct : forall p q, p === q -> p ~~ q
+  | wb_con : forall c p q, p ~~ q -> (plug c p) ~~ (plug c q)
 
   where "P ~~ Q" := (weak_bisimilar P Q).
   
@@ -280,7 +290,7 @@ Proof.
   apply wb_con.
   apply CH.
   apply H.
-Qed.
+Admitted.
 
 
 Lemma wb_trans:

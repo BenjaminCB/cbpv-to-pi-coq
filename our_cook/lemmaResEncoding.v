@@ -47,10 +47,63 @@ Lemma res_step_equals:
 Proof.
 Admitted.
 
+Lemma swap_swap_n:
+  forall n, swap (swap n) = n.
+Proof.
+  intros n.
+  destruct n.
+  reflexivity.
+  destruct n.
+  reflexivity.
+  reflexivity.
+Qed.
+
+Lemma iter_lift_subst_swap_swap_n:
+  forall n m, 
+    (Nat.iter n lift_subst swap (Nat.iter n lift_subst swap m)) = m.
+Proof.
+  intros n.
+  induction n.
+  
+  (* base case *)
+  simpl.
+  apply swap_swap_n.
+  
+  (* inductive case *)
+  intros m.
+  simpl.
+  rewrite <- IHn.
+  .
+  
+  
+  
+  
+  
+
+Lemma swap_swap_proc:
+  forall p, p [[swap]] [[swap]] = p.
+Proof.
+  
+
 Lemma res_swap_encode_value:
   forall v,
     Res ($ v ; [] $ [[swap]]) ~~ $ v ; [] $.
 Proof.
+  intros v.
+  destruct v.
+  
+  (* v is var *)
+  simpl.
+  unfold pointer.
+  unfold compose.
+  unfold shift.
+  simpl.
+  unfold pointer.
+  unfold lift_subst.
+  unfold compose.
+  simpl.
+  
+  (* v is thunk *)
 Admitted.
 
 Lemma res_encoding_value:
