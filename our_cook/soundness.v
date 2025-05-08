@@ -28,10 +28,34 @@ Lemma link_handlers: forall s n m refs,
 Proof.
 Admitted.
 
+Lemma encode_reach: 
+  forall n s u r,
+    n <> u -> n <> r -> ref_n_in_proc n ($ s ; u ; r ; [] $) = false.
+Proof.
+Admitted.
+
 Lemma substitution:
   forall s v u r,
     Res (Par ($ v ; [] $) ($ s ; (u + 1) ; (r + 1) ; [(0,0)] $)) ~~
     $ (s {{ extend_subst_lam v Var }}) ; u ; r ; []$.
+Proof.
+Admitted.
+
+Lemma ref_n_in_proc_shift:
+  forall p,
+    ref_n_in_proc 0 (p[[shift]]) = false.
+Proof.
+Admitted.
+
+Lemma shift_extend_proc:
+  forall p,
+    (p [[shift]] [[0 []> id]]) = p.
+Proof.
+Admitted.
+
+Lemma res_rep_in_0:
+  forall p,
+    Res (Rep (In 0 p)) ~~ Nil.
 Proof.
 Admitted.
 
@@ -41,11 +65,71 @@ Lemma rmIsolatedProc: forall s u r,
        (Par (encode s 1 0 [])
           (Rep (In 0 (In 0 (In 1 (encode s 1 0 [])))) [[shift]] [[shift]] [[shift]]))
        (Par (Link 1 (u + 6)) (Link 0 (r + 6)))) ~~ 
-  ((Res ^^ 6) (Par
+  ((Res ^^ 5) (Par
     (encode s 1 0 [])
-    (Par (Link 1 (u + 6)) (Link 0 (r + 6)))
+    (Par (Link 1 (u + 5)) (Link 0 (r + 5)))
   )).
 Proof.
+  intros s u r.
+  eapply wb_trans.
+  apply wb_struct.
+  repeat (apply con_res).
+  eapply sg_trans.
+  apply par_flatten.
+  eapply sg_trans.
+  apply con_par.
+  eapply sg_trans.
+  apply con_par.
+  apply sym.
+  apply sg_ref.
+  apply par_assoc.
+  apply sg_ref.
+  apply par_assoc.
+  
+  apply wb_con with 
+    (c := CRes (CRes CHole)).
+  eapply wb_trans.
+  apply wb_struct.
+  do 3 (apply con_res).
+  apply sg_par_res_r.
+  apply ref_n_in_proc_shift.
+  rewrite shift_extend_proc.
+  eapply wb_trans.
+  apply wb_struct.
+  do 2 (apply con_res).
+  apply sg_par_res_r.
+  apply ref_n_in_proc_shift.
+  rewrite shift_extend_proc.
+  eapply wb_trans.
+  apply wb_struct.
+  apply con_res.
+  apply sg_par_res_r.
+  apply ref_n_in_proc_shift.
+  rewrite shift_extend_proc.
+  
+  eapply wb_trans.
+  apply wb_struct.
+  apply sg_par_res_l.
+  replace (u + 6) with (6 + u) by lia.
+  replace (r + 6) with (6 + r) by lia.
+  simpl.
+  rewrite encode_reach.
+  reflexivity.
+  discriminate.
+  discriminate.
+  
+  eapply wb_trans.
+  apply wb_par.
+  apply res_rep_in_0.
+  apply wb_ref.
+  
+  eapply wb_trans.
+  apply wb_struct.
+  eapply sg_trans.
+  apply sym.
+  apply del_nil.
+  
+  
 Admitted.
 
 Lemma force_thunk_sound: 
@@ -54,42 +138,22 @@ forall s u r,
     encode (Force (Thunk s)) u r [] =()> P /\ P ~~ encode s u r [].
 Proof.
   intros s u r.
-  exists ((Res ^^ 6)(Par
-    (Par 
-      (encode s 1 0 [])
-      (Rep
-        (In 0 (In 0 (In 1 (encode s 1 0 [])))) 
-        [[shift]] [[shift]] [[shift]]
-      )
-    )
-    (Par 
-      (Link 1 (u + 6)) 
-      (Link 0 (r + 6))
-    )
-  )).
+  eexists.
   split.
   - eapply rt_trans.
     apply rt_step.
     simpl.
     repeat (apply RES_TAU).
-    apply COM with
-      (a := a_out 1)
-      (R := Rep (In 0 (In 0 (In 1 (encode s 1 0 [])))))
-      (S := Out 0 (Out 0 (Out 1 (Par (Link 1 (u + 6)) (Link 0 (r + 6)))))).
+    eapply COM with (a := a_out 1).
     discriminate.
     apply OUT.
     apply IN.
     
     eapply rt_trans.
+    unfold pointer.
     apply rt_step.
     repeat (apply RES_TAU).
-    apply COM with
-      (a := a_in 0)
-      (R := Par
-        (In 0 (In 1 (encode s 1 0 [])))
-        (Rep (In 0 (In 0 (In 1 (encode s 1 0 [])))) [[shift]])
-      )
-      (S := Out 0 (Out 1 (Par (Link 1 (u + 6)) (Link 0 (r + 6))))).
+    eapply COM with (a := a_in 0).
     discriminate.
     apply REP.
     eapply PAR_L.
@@ -101,13 +165,7 @@ Proof.
     eapply rt_trans.
     apply rt_step.
     repeat (apply RES_TAU).
-    apply COM with
-      (a := a_in 0)
-      (R := Par
-        (In 1 (encode s 1 0 []))
-        (Rep (In 0 (In 0 (In 1 (encode s 1 0 [])))) [[shift]] [[shift]])
-      )
-      (S := Out 1 (Par (Link 1 (u + 6)) (Link 0 (r + 6)))).
+    eapply COM with (a := a_in 0).
     discriminate.
     apply PAR_L.
     discriminate.
@@ -137,12 +195,12 @@ Proof.
     apply rmIsolatedProc.
     eapply wb_trans.
     apply wb_con with 
-      (c := CRes (CRes (CRes (CRes CHole)))).
-    replace (u + 6) with ((u + 4) + 2) by lia.
-    replace (r + 6) with ((r + 4) + 2) by lia.
+      (c := CRes (CRes (CRes CHole))).
+    replace (u + 5) with ((u + 3) + 2) by lia.
+    replace (r + 5) with ((r + 3) + 2) by lia.
     apply link_handlers.
     simpl.
-    fold ((Res ^^ 4) (encode s (u + 4) (r + 4) [])).
+    fold ((Res ^^ 3) (encode s (u + 3) (r + 3) [])).
     apply res_n_encoding.
 Qed.
 

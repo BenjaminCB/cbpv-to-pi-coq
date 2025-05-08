@@ -73,17 +73,12 @@ Proof.
   intros m.
   simpl.
   rewrite <- IHn.
-  .
-  
-  
-  
-  
-  
+Admitted.
 
 Lemma swap_swap_proc:
   forall p, p [[swap]] [[swap]] = p.
 Proof.
-  
+Admitted.
 
 Lemma res_swap_encode_value:
   forall v,
@@ -99,9 +94,13 @@ Proof.
   unfold shift.
   simpl.
   unfold pointer.
-  unfold lift_subst.
-  unfold compose.
-  simpl.
+  
+  apply wb.
+  split.
+  
+  intros a p' Hstep.
+  destruct a.
+  
   
   (* v is thunk *)
 Admitted.
@@ -111,11 +110,11 @@ Lemma res_encoding_value:
     Res ($ Val v; u + 1; r + 1; [] $) ~~
     ($ Val v; u; r; [] $).
 Proof.
-  cofix CH.
   intros v u r.
   simpl.
   apply wb.
   split.
+  
   
   (* bisim first clause *)
   intros a.

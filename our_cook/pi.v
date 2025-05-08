@@ -3,7 +3,7 @@ Require Import Coq.Lists.List.
 Import ListNotations.
 Require Import Nat.
 Require Import Bool.
-Require Import Coq.Relations.Relation_Operators. 
+Require Import Coq.Relations.Relation_Operators.
 
 Notation "f >>> g" := (compose g f) (at level 40, left associativity).
 Notation "g <<< f" := (compose g f) (at level 40, left associativity).
@@ -176,7 +176,8 @@ Notation "constructor ^^ n" := (applier constructor n) (at level 90, left associ
 Reserved Notation "P === Q" (at level 70).
 
 Inductive struct_cong : proc -> proc -> Prop :=
-  | nil : forall p, p === (Par p Nil)
+  | add_nil : forall p, p === (Par p Nil)
+  | del_nil : forall p, (Par p Nil) === p
   | sym : forall p q, (Par p q) === (Par q p)
   | con_par : forall p q r s, p === r -> q === s -> (Par p q) === (Par r s) 
   | con_res : forall p q, p === q -> (Res p) === (Res q)
@@ -188,9 +189,10 @@ Inductive struct_cong : proc -> proc -> Prop :=
   | sg_par_res_l : forall p q, ref_n_in_proc 0 q = false -> (Res (Par p q)) === (Par (Res p) (q[[0 []> id]]))
   | par_assoc : forall p q r, (Par (Par p q) r) === (Par p (Par q r))
   | par_swap : forall p q r s, (Par (Par p q) (Par r s)) === (Par (Par p r) (Par q s))
+  | par_flatten : forall p q r s, (Par (Par p q) (Par r s)) === (Par (Par (Par p q) r) s)
 
   where "P === Q" := (struct_cong P Q).
-
+ 
 Reserved Notation "P ~~ Q" (at level 70).
 
 CoInductive weak_bisimilar : proc -> proc -> Prop :=
