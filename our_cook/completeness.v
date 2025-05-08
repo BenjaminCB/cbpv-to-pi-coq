@@ -19,8 +19,11 @@ Lemma app_complete: forall P s v u r,
       (App s v --> t \/ App s v = t).
 Proof.
   intros.
-  inversion H.
+  inversion H. contradiction.
+  destruct v.
 Admitted.
+
+
 Lemma force_complete: forall P v u r,
   ($ Force v; u; r; [] $) -( a_tau )> P ->
     exists P' t,
@@ -28,39 +31,80 @@ Lemma force_complete: forall P v u r,
     P' ~~ ($ t; u; r; [] $) /\
     (Force v --> t \/ Force v = t).
 Proof.
-  intros.
-  inversion H.
-  congruence.
+Proof.
+  intros P v u r Hstep.
+  inversion Hstep; subst; try congruence.
   destruct v.
-  set (t := HELP).  (* a term *)
-  set (P' := ($ t; u; r; [] $)).                                (* a proc *)
-  exists ($ t; u; r; [] $), t.
-  
-  split.
-  destruct H3.
-  admit.
-  exists ($ t; u; r; [] $), t.
-  exists P. encode (Force (Thunk P)) u r [].
 
-  split. destruct H4.
-  apply rt_refl.
+  simpl in *.
+  exists ($ Force (Var n); u; r; [] $), (Force (Var n)).
+  split.
+  inversion H0; subst. congruence.
+  simpl. admit.
+
+  split.
+  apply wb_ref.
+  right. reflexivity.
+
+(*Force Thunk s*)
+  simpl in *.
+  exists ($ (Force (Thunk s)); u; r; [] $), s.
+  split.
+  inversion H0; subst. congruence.
+  simpl. admit.
+
   split.
   apply wb.
+  split. intros.
+  exists p'.
+  inversion H.
+  split.
+  admit.
+  apply wb_ref.
 
   split.
+  admit.
+  apply wb_ref.
+  
   intros.
-  (*exists (Force (Var n)).*)
-  admit. 
-  admit.
-  right. reflexivity.
+(*Muligvis ikke freskridt herfra*)
+  simpl.
+  eexists.
+  split.
+  destruct a. 
+  apply WT_TAU.
+  apply rt_step.
+  unfold tau_step.
+  apply Hstep.
+  admit. admit.
 
-  exists P, (Force v).
-  split. destruct H3.
-  apply rt_refl.
+  admit.
+
+  left. apply FORCE_THUNK.
+Admitted.
+
+Lemma tau_step_bind : forall s1 s2 u r P,
+    ($ Bind s1 s2; u; r; [] $) -(a_tau)> P ->
+    ( ($ s1; u; r; [] $) -(a_tau)> P ->
+      exists (P1 : proc) (t1 : term),
+        P =()> P1 /\ P1 ~~ ($ t1; u; r; [] $) /\ (s1 --> t1 \/ s1 = t1) ) ->
+    ( ($ s2; u; r; [] $) -(a_tau)> P ->
+      exists (P2 : proc) (t2 : term),
+        P =()> P2 /\ P2 ~~ ($ t2; u; r; [] $) /\ (s2 --> t2 \/ s2 = t2) ) ->
+    exists (P' : proc) (t : term),
+      P =()> P' /\ P' ~~ ($ t; u; r; [] $) /\ (Bind s1 s2 --> t \/ Bind s1 s2 = t).
+Proof.
+  intros.
+  inversion H. congruence.
+  destruct H5.
+  eexists. eexists.
   split.
   admit.
-  right. reflexivity.
+  
+  split.
+  admit.
 Admitted.
+
 
 Theorem complete: forall s P u r, 
   (encode s u r []) -( a_tau )> P -> 
@@ -74,5 +118,5 @@ Proof.
   - apply app_complete. apply H. 
   - apply force_complete. apply H.
   - inversion H.
-  - admit.
+  - apply tau_step_bind. apply H. apply IHs1. apply IHs2.
 Admitted.
