@@ -21,8 +21,9 @@ Proof.
   intros.
   inversion H. contradiction.
   destruct v.
+  eexists. eexists.
+  split.
 Admitted.
-
 
 Lemma force_complete: forall P v u r,
   ($ Force v; u; r; [] $) -( a_tau )> P ->
@@ -31,17 +32,25 @@ Lemma force_complete: forall P v u r,
     P' ~~ ($ t; u; r; [] $) /\
     (Force v --> t \/ Force v = t).
 Proof.
-Proof.
   intros P v u r Hstep.
   inversion Hstep; subst; try congruence.
   destruct v.
-
+(*  (*Mulighed 1, Muligt fremskridt*)
+  inversion Hstep; subst; try congruence.
+  inversion H0; subst; try congruence.
+  inversion H1 as [ | | | | | | | | ?a ?P1 ?Q1 ?R1 ?S1 Haout Hout Hin | | ]; subst. repeat congruence.
+  contradiction.
+  exists ($ (Force (Var n)); u; r; [] $), (Force (Var n)).
+  split.
+  Admitted.
+*)
+  (*Mulighed 2*)
   simpl in *.
   exists ($ Force (Var n); u; r; [] $), (Force (Var n)).
+
   split.
   inversion H0; subst. congruence.
-  simpl. admit.
-
+  admit.
   split.
   apply wb_ref.
   right. reflexivity.
@@ -108,15 +117,17 @@ Admitted.
 
 Theorem complete: forall s P u r, 
   (encode s u r []) -( a_tau )> P -> 
-  exists P' t,
-    P =()> P' /\ (P' ~~ encode t u r []) /\ (s --> t \/ s = t).
+    exists P' t,
+      P =()> P' /\
+      P' ~~ encode t u r [] /\
+      (s --> t \/ s = t).
 Proof.
-  intros.
-  induction s.
+  intros s P u r H.
+  induction s as [| | s1 IH1 s2 IH2 | v | |].
   - inversion H.
   - inversion H.
-  - apply app_complete. apply H. 
-  - apply force_complete. apply H.
+  - apply app_complete; auto.
+  - apply force_complete; auto.
   - inversion H.
-  - apply tau_step_bind. apply H. apply IHs1. apply IHs2.
-Admitted.
+  - apply tau_step_bind; auto.
+Qed.
