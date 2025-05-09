@@ -28,16 +28,26 @@ Lemma link_handlers: forall s n m refs,
 Proof.
 Admitted.
 
+
+Lemma substitution:
+  forall s v u r,
+    Res (Par ($ v ; [] $) ($ s ; S u ; S r ; [(0,0)] $)) ~~
+    $ (s {{ extend_subst_lam v (Var <<< BV) }}) ; u ; r ; []$.
+Proof.
+Admitted.
+
 Lemma encode_reach: 
   forall n s u r,
     n <> u -> n <> r -> ref_n_in_proc n ($ s ; u ; r ; [] $) = false.
 Proof.
 Admitted.
 
-Lemma substitution:
-  forall s v u r,
-    Res (Par ($ v ; [] $) ($ s ; S u ; S r ; [(0,0)] $)) ~~
-    $ (s {{ extend_subst_lam v (Var <<< BV) }}) ; u ; r ; []$.
+Lemma redundant_subst:
+  forall s u r refs n subst,
+    n > u -> 
+    n > r -> 
+    $ s ; u ; r ; refs $ [[Nat.iter n lift_subst subst]] = 
+    $ s ; u ; r ; refs $.
 Proof.
 Admitted.
 
@@ -133,9 +143,32 @@ Proof.
   ).
   fold id.
   
+  change
+    (lift_subst (lift_subst (lift_subst (0 []> id))))
+  with
+    (Nat.iter 3 lift_subst (0 []> id)).
+  eapply wb_trans.
+  apply wb_con with
+    (c := CRes (CRes (CRes (CParL
+      (CParL
+        CHole
+        (Link (BN 1) (BN (S (S (S (S (S u)))))))
+      )
+      (Link (BN 0) (BN (S (S (S (S (S r)))))))
+    )))).
+  rewrite redundant_subst.
+  apply wb_ref.
+  lia.
+  lia.
+  simpl.
   
+  eapply wb_trans.
+  apply wb_struct.
+  repeat (apply con_res).
+  apply par_assoc.
   
-Admitted.
+  apply wb_ref.
+Qed.
 
 Lemma force_thunk_sound: 
 forall s u r,
@@ -247,41 +280,6 @@ Proof.
     apply rmUnreffedRestrictions.
     apply substitution.
 Qed.
-
-Lemma lift_subst_eq: 
-  forall subst,
-    lift_subst subst = (0 []> (subst >>> S)).
-Proof.
-  reflexivity.
-Qed.
-
-Lemma ref_n_in_proc_0_shift:
-  forall p, ref_n_in_proc 0 (p[[S]]) = false.
-Proof.
-  intros p.
-  induction p.
-Admitted.
-
-Lemma shift_extend_id_n:
-  forall n, (0 []> id) (S n) = n.
-Proof.
-  intros n.
-  induction n.
-  reflexivity.
-  simpl.
-  unfold id.
-  reflexivity.
-Qed.
-
-Lemma shift_extend_id_proc: 
-  forall p, (p [[S]] [[0 []> id]]) = p.
-Proof.
-  intros.
-  induction p.
-  simpl.
-  unfold id.
-  fold id.
-Admitted.
 
 Lemma we_need_this_but_is_hard:
   forall s v u r,
@@ -396,7 +394,7 @@ Proof.
     apply wb_struct.
     apply sg_par_res_l.
     simpl.
-    apply ref_n_in_proc_0_shift.
+    apply ref_n_in_proc_shift.
     apply wb_par.
     replace 1 with (0 + 1) by lia.
     replace (S (0 + 1)) with (1 + 1) by lia.
@@ -422,11 +420,11 @@ Proof.
     eapply sg_trans.
     apply con_res.
     apply sg_par_res_r.
-    rewrite shift_extend_id_proc.
-    apply ref_n_in_proc_0_shift.
+    rewrite shift_extend_proc.
+    apply ref_n_in_proc_shift.
     apply sg_par_res_r.
-    repeat (rewrite shift_extend_id_proc).
-    apply ref_n_in_proc_0_shift.
+    repeat (rewrite shift_extend_proc).
+    apply ref_n_in_proc_shift.
     apply wb_par.
     apply wb_ref.
     eapply wb_trans.
@@ -440,7 +438,7 @@ Proof.
     unfold id.
     apply link_handlers.
     simpl.
-    repeat (rewrite shift_extend_id_proc).
+    repeat (rewrite shift_extend_proc).
     
     eapply wb_trans.
     apply wb_con with
