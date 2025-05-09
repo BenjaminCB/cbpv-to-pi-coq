@@ -40,8 +40,6 @@ Fixpoint plug (c : context) (p : proc) :=
 
 Definition id (n : nat) := n.
 
-Definition shift (n : nat) := n + 1.
-
 Definition swap (n : nat) :=
   match n with
   | 0 => 1
@@ -56,7 +54,7 @@ Definition extend_subst (s : nat) (subst : nat -> nat) (n : nat) :=
   end.
 
 Definition lift_subst (subst : nat -> nat) := 
-  extend_subst 0 (subst >>> shift).
+  extend_subst 0 (subst >>> S).
 
 Fixpoint int_subst (p : proc) (subst : nat -> nat) :=
   match p with
@@ -93,7 +91,7 @@ Definition int_subst_act (a : act) (subst : nat -> nat) :=
   | a_out n => a_out (subst n)
   end.
   
-Notation "a (+1)" := (int_subst_act a shift) (at level 90, left associativity).
+Notation "a (+1)" := (int_subst_act a S) (at level 90, left associativity).
 
 Reserved Notation "P -( a )> Q" (at level 70).
 
@@ -103,9 +101,9 @@ Inductive trans: proc -> act -> proc -> Prop :=
   | IN    (n : nat) (P: proc): 
     (In n P) -( a_in n )> P
   | PAR_L (a : act) (P Q R : proc):
-    a <> a_tau -> P -( a )> R -> Par P Q -( a )> Par R (Q[[shift]])
+    a <> a_tau -> P -( a )> R -> Par P Q -( a )> Par R (Q[[S]])
   | PAR_R (a : act) (P Q R : proc):
-    a <> a_tau -> Q -( a )> R -> Par P Q -( a )> Par (P[[shift]]) R
+    a <> a_tau -> Q -( a )> R -> Par P Q -( a )> Par (P[[S]]) R
   | PAR_L_TAU (P Q R : proc):
     P -( a_tau )> R -> Par P Q -( a_tau )> Par R Q
   | PAR_R_TAU (P Q R : proc):

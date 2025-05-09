@@ -11,7 +11,7 @@ From Encoding Require Export lemmaResEncoding.
 
 Lemma link_lift: 
   forall n s u r refs,
-    Res (Par (Link 0 n) ($ s ; u + 1 ; r + 1 ; refs $ [[Nat.iter n lift_subst shift]])) ~~
+    Res (Par (Link 0 n) ($ s ; S u ; S r ; refs $ [[Nat.iter n lift_subst S]])) ~~
     $ s ; u ; r ; refs $.
 Proof.
 Admitted.
@@ -20,8 +20,8 @@ Lemma link_handlers: forall s n m refs,
   (Res (Res (Par 
     (encode s 1 0 refs)
     (Par
-      (Link 1 (n + 2))
-      (Link 0 (m + 2))
+      (Link 1 (S (S n)))
+      (Link 0 (S (S m)))
     )
   ))) ~~
   (encode s n m refs).
@@ -36,20 +36,20 @@ Admitted.
 
 Lemma substitution:
   forall s v u r,
-    Res (Par ($ v ; [] $) ($ s ; (u + 1) ; (r + 1) ; [(0,0)] $)) ~~
+    Res (Par ($ v ; [] $) ($ s ; S u ; S r ; [(0,0)] $)) ~~
     $ (s {{ extend_subst_lam v Var }}) ; u ; r ; []$.
 Proof.
 Admitted.
 
 Lemma ref_n_in_proc_shift:
   forall p,
-    ref_n_in_proc 0 (p[[shift]]) = false.
+    ref_n_in_proc 0 (p[[S]]) = false.
 Proof.
 Admitted.
 
 Lemma shift_extend_proc:
   forall p,
-    (p [[shift]] [[0 []> id]]) = p.
+    (p [[S]] [[0 []> id]]) = p.
 Proof.
 Admitted.
 
@@ -63,11 +63,11 @@ Lemma rmIsolatedProc: forall s u r,
   (Res ^^ 6)
     (Par
        (Par (encode s 1 0 [])
-          (Rep (In 0 (In 0 (In 1 (encode s 1 0 [])))) [[shift]] [[shift]] [[shift]]))
-       (Par (Link 1 (u + 6)) (Link 0 (r + 6)))) ~~ 
+          (Rep (In 0 (In 0 (In 1 (encode s 1 0 [])))) [[S]] [[S]] [[S]]))
+       (Par (Link 1 (6 + u)) (Link 0 (6 + r)))) ~~ 
   ((Res ^^ 5) (Par
     (encode s 1 0 [])
-    (Par (Link 1 (u + 5)) (Link 0 (r + 5)))
+    (Par (Link 1 (5 + u)) (Link 0 (5 + r)))
   )).
 Proof.
   intros s u r.
@@ -110,8 +110,6 @@ Proof.
   eapply wb_trans.
   apply wb_struct.
   apply sg_par_res_l.
-  replace (u + 6) with (6 + u) by lia.
-  replace (r + 6) with (6 + r) by lia.
   simpl.
   rewrite encode_reach.
   reflexivity.
@@ -180,9 +178,9 @@ Proof.
       (a := a_in 1)
       (R := Par
         (encode s 1 0 [])
-        (Rep (In 0 (In 0 (In 1 (encode s 1 0 [])))) [[shift]] [[shift]] [[shift]])
+        (Rep (In 0 (In 0 (In 1 (encode s 1 0 [])))) [[S]] [[S]] [[S]])
       )
-      (S := Par (Link 1 (u + 6)) (Link 0 (r + 6))).
+      (S := Par (Link 1 (6 + u)) (Link 0 (6 + r))).
     discriminate.
     apply PAR_L.
     discriminate.
@@ -195,12 +193,13 @@ Proof.
     apply rmIsolatedProc.
     eapply wb_trans.
     apply wb_con with 
-      (c := CRes (CRes (CRes CHole))).
-    replace (u + 5) with ((u + 3) + 2) by lia.
-    replace (r + 5) with ((r + 3) + 2) by lia.
+      (c := CRes (CRes (CRes CHole))).    
+    simpl.
     apply link_handlers.
     simpl.
-    fold ((Res ^^ 3) (encode s (u + 3) (r + 3) [])).
+    replace (S (S (S u))) with (3 + u) by lia.
+    replace (S (S (S r))) with (3 + r) by lia.
+    fold ((Res ^^ 3) (encode s (3 + u) (3 + r) [])).
     apply res_n_encoding.
 Qed.
 
@@ -219,8 +218,8 @@ Qed.
 
 Lemma rmUnreffedRestrictions:
   forall s v u r,
-    (Res ^^ 3) (Par ($ v; [] $) ($ s; u + 3; r + 3; [(0,0)] $)) ~~
-    (Res (Par ($ v; [] $) ($ s; u + 1; r + 1; [(0,0)] $))).
+    (Res (Res (Res (Par ($ v; [] $) ($ s; S (S (S u)) ; S (S (S r)) ; [(0,0)] $))))) ~~
+    (Res (Par ($ v; [] $) ($ s; S u ; S r ; [(0,0)] $))).
 Proof.
 Admitted.
 
@@ -231,8 +230,7 @@ Lemma bind_base_sound :
       P ~~ encode (s {{extend_subst_lam v Var}}) u r [].
 Proof.
   intros s v u r.
-  exists 
-    ((Res ^^ 3) (Par ($ v; [] $) (encode s (u + 3) (r + 3) [(0,0)]))).
+  eexists.
   split.
   - simpl.
     eapply rt_trans.
@@ -248,53 +246,46 @@ Proof.
     apply substitution.
 Qed.
 
-Lemma shift_eq:
-  forall n,
-    shift n = n + 1.
-Proof.
-  reflexivity.
-Qed.
-
 Lemma lift_subst_eq: 
   forall subst,
-    lift_subst subst = (0 []> (subst >>> shift)).
+    lift_subst subst = (0 []> (subst >>> S)).
 Proof.
   reflexivity.
 Qed.
 
 Lemma ref_n_in_proc_0_shift:
-  forall p, ref_n_in_proc 0 (p[[shift]]) = false.
+  forall p, ref_n_in_proc 0 (p[[S]]) = false.
 Proof.
   intros p.
   induction p.
 Admitted.
 
 Lemma shift_extend_id_n:
-  forall n, (0 []> id) (shift n) = n.
+  forall n, (0 []> id) (S n) = n.
 Proof.
   intros n.
   induction n.
   reflexivity.
   simpl.
-  replace (n + 1) with (S n) by lia.
   unfold id.
   reflexivity.
 Qed.
 
 Lemma shift_extend_id_proc: 
-  forall p, (p [[shift]] [[0 []> id]]) = p.
+  forall p, (p [[S]] [[0 []> id]]) = p.
 Proof.
   intros.
   induction p.
   simpl.
-  rewrite shift_extend_id_n.
+  unfold id.
+  fold id.
 Admitted.
 
 Lemma we_need_this_but_is_hard:
   forall s v u r,
     Res (Par 
-      ($ v; [] $ [[lift_subst shift]])
-      ($ s; u + 1; r + 1; [(0, 0)] $)
+      ($ v; [] $ [[lift_subst S]])
+      ($ s; S u; S r; [(0, 0)] $)
     ) ~~
     (Par 
       ($ v; [] $)
@@ -310,8 +301,8 @@ Lemma app_base_sound:
       P ~~ ($ s {{v {}>Var}}; u; r; [] $).
 Proof.
   intros s v u r.
-  exists 
-    ((Res ^^ 9) (Par
+  eexists.
+    (* ((Res ^^ 9) (Par
       (Par 
         (Link 2 (u + 9))
         (Par (Link 1 (r + 9)) (Link 0 3))
@@ -320,7 +311,7 @@ Proof.
         ($ s ; 2 ; 1 ; [(0, 0)]$ [[lift_subst (lift_subst (lift_subst shift))]])
         ($v ; []$ [[lift_subst shift]] [[shift]] [[shift]] [[shift]])
       )
-    )).
+    )). *)
   split.
   - simpl.
     eapply rt_trans.
@@ -342,7 +333,6 @@ Proof.
     apply PAR_R.
     discriminate.
     simpl.
-    rewrite shift_eq.
     apply OUT.
     
     eapply rt_trans.
@@ -379,9 +369,9 @@ Proof.
     apply rt_refl.
 
   - change
-      (lift_subst (lift_subst (lift_subst shift)))
+      (lift_subst (lift_subst (lift_subst S)))
     with
-      (Nat.iter 3 lift_subst shift).
+      (Nat.iter 3 lift_subst S).
     (* working towards applyng link *)
     eapply wb_trans.
     apply wb_con with
@@ -413,8 +403,6 @@ Proof.
     eapply wb_trans.
     apply wb_struct.
     apply sg_par_res_l.
-    replace (u + 9) with (9 + u) by lia.
-    replace (r + 9) with (9 + r) by lia.
     simpl.
     apply ref_n_in_proc_0_shift.
     apply wb_par.
@@ -457,9 +445,6 @@ Proof.
     apply con_par.
     apply sg_ref.
     apply sym.
-    replace (u + 9) with (1 + (u + 6) + 2) by lia.
-    replace (r + 9) with (1 + (r + 6) + 2) by lia.
-    simpl.
     unfold id.
     apply link_handlers.
     simpl.
@@ -468,16 +453,12 @@ Proof.
     eapply wb_trans.
     apply wb_con with
       (c := (CRes (CRes (CRes (CRes (CRes CHole)))))).
-    replace (u + 6) with ((u + 5) + 1) by lia.
-    replace (r + 6) with ((r + 5) + 1) by lia.
     apply we_need_this_but_is_hard.
     simpl.
     
     eapply wb_trans.
     apply wb_con with
       (c := (CRes (CRes (CRes (CRes CHole))))).
-    replace (u + 5) with ((u + 4) + 1) by lia.
-    replace (r + 5) with ((r + 4) + 1) by lia.
     apply substitution.
     simpl.
     
@@ -529,11 +510,7 @@ Proof.
   - apply bind_base_sound.
   - intros u r.
     destruct (IHHred 1 0) as [ P [ Hstep Hsim ] ].
-    exists 
-      (Res (Res (Par 
-        (P) 
-        (In 0 ($ t; u + 3; r + 3; [(0, 0)] $)
-      )))).
+    eexists.
     simpl.
     split.
     
@@ -544,7 +521,7 @@ Proof.
     apply wb_con with 
       (c := (CRes (CRes (CParL
         (CHole)
-        (In 0 ($ t; u + 3; r + 3; [(0, 0)] $))
+        (In 0 ($ t; 3 + u; 3 + r; [(0, 0)] $))
       )))).
     apply Hsim.
     simpl.
@@ -565,9 +542,9 @@ Proof.
     apply wb_con with 
       (c := (CRes (CRes (CRes (CRes (CParR 
         (In 3 (In 2 (Out 1 (Out 2 (Out 3 (Par 
-          (Link 2 (u + 9))
+          (Link 2 (9 + u))
           (Par 
-            (Link 1 (r + 9)) 
+            (Link 1 (9 + r)) 
             (Link 0 3)
           )
         ))))))

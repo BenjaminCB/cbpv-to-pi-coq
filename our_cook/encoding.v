@@ -27,9 +27,9 @@ Fixpoint encode (s : term) (u r : nat) (refs : list (nat * nat)) :=
   | Abs s => Out u (In 0 (In 1 (In 2 (encode s 2 1 ((0,0) :: incRefs 1 4 refs)))))
   | App s v => (Res ^^ 4) (Par 
       (In 3 (In 2 (Out 1 (Out 2 (Out 3 (Par
-        (Link 2 (u + 9))
+        (Link 2 (9 + u))
         (Par
-          (Link 1 (r + 9))
+          (Link 1 (9 + r))
           (Link 0 3)
         )
       ))))))
@@ -41,14 +41,14 @@ Fixpoint encode (s : term) (u r : nat) (refs : list (nat * nat)) :=
   | Force v => (Res ^^ 2) (Par
       (Out 1 (encode_value v (incRefs 0 2 refs)))
       (In 1 (Out 0 (Out 0 (Out 1 (Par
-        (Link 1 (u + 6))
-        (Link 0 (r + 6))
+        (Link 1 (6 + u))
+        (Link 0 (6 + r))
       )))))
     )
   | Ret v => Out r (encode_value v refs)
   | Bind s t => (Res ^^ 2) (Par
       (encode s 1 0 (incRefs 0 2 refs))
-      (In 0 (encode t (u + 3) (r + 3) ((0,0) :: incRefs 1 3 refs)))
+      (In 0 (encode t (3 + u) (3 + r) ((0,0) :: incRefs 1 3 refs)))
     )
   | Val v => Out u (encode_value v refs)
   end

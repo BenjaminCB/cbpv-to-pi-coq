@@ -35,14 +35,13 @@ Proof.
   destruct k as [ | k ];  [ lia | ].
   unfold compose.
   simpl.
-  unfold shift.
   lia.
 Qed.
 Hint Rewrite lift_swap_0 lift_swap_1 lift_swap_2 lift_swap_ge : subst.
 
 Lemma res_step_equals:
   forall n v p',
-    Res (Out (n + 1) ($ v; [] $)) -( a_out n )> p' ->
+    Res (Out (S n) ($ v; [] $)) -( a_out n )> p' ->
     p' = Res ($ v; [] $ [[swap]]).
 Proof.
 Admitted.
@@ -91,9 +90,7 @@ Proof.
   simpl.
   unfold pointer.
   unfold compose.
-  unfold shift.
   simpl.
-  unfold pointer.
   
   apply wb.
   split.
@@ -107,7 +104,7 @@ Admitted.
 
 Lemma res_encoding_value:
   forall v u r,
-    Res ($ Val v; u + 1; r + 1; [] $) ~~
+    Res ($ Val v; S u; S r; [] $) ~~
     ($ Val v; u; r; [] $).
 Proof.
   intros v u r.
@@ -156,17 +153,13 @@ Proof.
   intros p' Hstep.
   inversion Hstep.
   inversion H1.
-  unfold shift in H7.
-  replace (u + 1) with (S u) in H7 by lia.
-  replace (n + 1) with (S n) in H7 by lia.
-  apply Nat.succ_inj in H7.
   contradiction.
   
   (* bisim second clause *)
 Admitted.
 
 Lemma res_encoding: forall s u r,
-  (Res (encode s (u + 1) (r + 1) [])) ~~ (encode s u r []).
+  (Res (encode s (S u) (S r) [])) ~~ (encode s u r []).
 Proof.
   cofix CH.
   intros s.
@@ -177,7 +170,7 @@ Admitted.
 
 Lemma res_n_encoding:
 forall n s u r,
-  ((Res ^^ n) (encode s (u + n) (r + n) [])) ~~ (encode s u r []).
+  ((Res ^^ n) (encode s (n + u) (n + r) [])) ~~ (encode s u r []).
 Proof.
   intros n.
   induction n.
@@ -189,8 +182,8 @@ Proof.
   - intros s u r.
     eapply wb_trans.
     * simpl.
-      replace (u + S n) with ((u + 1) + n) by lia.
-      replace (r + S n) with ((r + 1) + n) by lia.
+      replace (S (n + u)) with (n + S u) by lia.
+      replace (S (n + r)) with (n + S r) by lia.
       apply wb_con with (c := CRes (CHole)).
       apply IHn.
     * apply res_encoding.
