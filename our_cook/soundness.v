@@ -11,7 +11,7 @@ From Encoding Require Export lemmaResEncoding.
 
 Lemma link_lift: 
   forall n s u r refs,
-    Res (Par (Link 0 n) ($ s ; S u ; S r ; refs $ [[Nat.iter n lift_subst S]])) ~~
+    Res (Par (Link (BN 0) (BN n)) ($ s ; S u ; S r ; refs $ [[Nat.iter n lift_subst S]])) ~~
     $ s ; u ; r ; refs $.
 Proof.
 Admitted.
@@ -20,8 +20,8 @@ Lemma link_handlers: forall s n m refs,
   (Res (Res (Par 
     (encode s 1 0 refs)
     (Par
-      (Link 1 (S (S n)))
-      (Link 0 (S (S m)))
+      (Link (BN 1) (BN (S (S n))))
+      (Link (BN 0) (BN (S (S m))))
     )
   ))) ~~
   (encode s n m refs).
@@ -37,7 +37,7 @@ Admitted.
 Lemma substitution:
   forall s v u r,
     Res (Par ($ v ; [] $) ($ s ; S u ; S r ; [(0,0)] $)) ~~
-    $ (s {{ extend_subst_lam v Var }}) ; u ; r ; []$.
+    $ (s {{ extend_subst_lam v (Var <<< BV) }}) ; u ; r ; []$.
 Proof.
 Admitted.
 
@@ -55,7 +55,7 @@ Admitted.
 
 Lemma res_rep_in_0:
   forall p,
-    Res (Rep (In 0 p)) ~~ Nil.
+    Res (Rep (In (BN 0) p)) ~~ Nil.
 Proof.
 Admitted.
 
@@ -63,11 +63,11 @@ Lemma rmIsolatedProc: forall s u r,
   (Res ^^ 6)
     (Par
        (Par (encode s 1 0 [])
-          (Rep (In 0 (In 0 (In 1 (encode s 1 0 [])))) [[S]] [[S]] [[S]]))
-       (Par (Link 1 (6 + u)) (Link 0 (6 + r)))) ~~ 
+          (Rep (In (BN 0) (In (BN 0) (In (BN 1) (encode s 1 0 [])))) [[S]] [[S]] [[S]]))
+       (Par (Link (BN 1) (BN (6 + u))) (Link (BN 0) (BN (6 + r))))) ~~ 
   ((Res ^^ 5) (Par
     (encode s 1 0 [])
-    (Par (Link 1 (5 + u)) (Link 0 (5 + r)))
+    (Par (Link (BN 1) (BN (5 + u))) (Link (BN 0) (BN (5 + r))))
   )).
 Proof.
   intros s u r.
@@ -126,6 +126,13 @@ Proof.
   eapply sg_trans.
   apply sym.
   apply del_nil.
+  repeat (
+    simpl;
+    unfold compose;
+    unfold id
+  ).
+  fold id.
+  
   
   
 Admitted.
@@ -142,7 +149,7 @@ Proof.
     apply rt_step.
     simpl.
     repeat (apply RES_TAU).
-    eapply COM with (a := a_out 1).
+    eapply COM with (a := a_out (BN 1)).
     discriminate.
     apply OUT.
     apply IN.
@@ -151,7 +158,7 @@ Proof.
     unfold pointer.
     apply rt_step.
     repeat (apply RES_TAU).
-    eapply COM with (a := a_in 0).
+    eapply COM with (a := a_in (BN 0)).
     discriminate.
     apply REP.
     eapply PAR_L.
@@ -163,7 +170,7 @@ Proof.
     eapply rt_trans.
     apply rt_step.
     repeat (apply RES_TAU).
-    eapply COM with (a := a_in 0).
+    eapply COM with (a := a_in (BN 0)).
     discriminate.
     apply PAR_L.
     discriminate.
@@ -174,13 +181,8 @@ Proof.
     eapply rt_trans.
     apply rt_step.
     repeat (apply RES_TAU).
-    apply COM with
-      (a := a_in 1)
-      (R := Par
-        (encode s 1 0 [])
-        (Rep (In 0 (In 0 (In 1 (encode s 1 0 [])))) [[S]] [[S]] [[S]])
-      )
-      (S := Par (Link 1 (6 + u)) (Link 0 (6 + r))).
+    eapply COM with
+      (a := a_in (BN 1)).
     discriminate.
     apply PAR_L.
     discriminate.
@@ -211,7 +213,7 @@ Proof.
 Qed.
 
 Lemma pointer_eq t :
-  pointer t = Rep (In 0 (In 0 (In 1 t))).
+  pointer t = Rep (In (BN 0) (In (BN 0) (In (BN 1) t))).
 Proof.
   reflexivity.
 Qed.
@@ -227,7 +229,7 @@ Lemma bind_base_sound :
   forall s v u r,
     exists P,
       encode (Bind (Ret v) s) u r [] =()> P /\
-      P ~~ encode (s {{extend_subst_lam v Var}}) u r [].
+      P ~~ encode (s {{extend_subst_lam v (Var <<< BV)}}) u r [].
 Proof.
   intros s v u r.
   eexists.
@@ -236,7 +238,7 @@ Proof.
     eapply rt_trans.
     apply rt_step.
     repeat (apply RES_TAU).
-    eapply COM with (a := a_out 0).
+    eapply COM with (a := a_out (BN 0)).
     discriminate.
     apply OUT.
     apply IN.
@@ -298,26 +300,16 @@ Lemma app_base_sound:
   forall s v u r,
     exists P,
       ($ App (Abs s) v; u; r; [] $) =()> P /\
-      P ~~ ($ s {{v {}>Var}}; u; r; [] $).
+      P ~~ ($ s {{v {}> (Var <<< BV)}}; u; r; [] $).
 Proof.
   intros s v u r.
   eexists.
-    (* ((Res ^^ 9) (Par
-      (Par 
-        (Link 2 (u + 9))
-        (Par (Link 1 (r + 9)) (Link 0 3))
-      )
-      (Par
-        ($ s ; 2 ; 1 ; [(0, 0)]$ [[lift_subst (lift_subst (lift_subst shift))]])
-        ($v ; []$ [[lift_subst shift]] [[shift]] [[shift]] [[shift]])
-      )
-    )). *)
   split.
   - simpl.
     eapply rt_trans.
     apply rt_step.
     repeat (apply RES_TAU).
-    apply COM with (a := a_in 3).
+    apply COM with (a := a_in (BN 3)).
     discriminate.
     apply IN.
     apply PAR_L.
@@ -327,7 +319,7 @@ Proof.
     eapply rt_trans.
     apply rt_step.
     repeat (apply RES_TAU).
-    apply COM with (a := a_in 2).
+    apply COM with (a := a_in (BN 2)).
     discriminate.
     apply IN.
     apply PAR_R.
@@ -338,7 +330,7 @@ Proof.
     eapply rt_trans.
     apply rt_step.
     repeat (apply RES_TAU).
-    apply COM with (a := a_out 1).
+    apply COM with (a := a_out (BN 1)).
     discriminate.
     apply OUT.
     apply PAR_L.
@@ -349,7 +341,7 @@ Proof.
     eapply rt_trans.
     apply rt_step.
     repeat (apply RES_TAU).
-    apply COM with (a := a_out 2).
+    apply COM with (a := a_out (BN 2)).
     discriminate.
     apply OUT.
     apply PAR_L.
@@ -359,7 +351,7 @@ Proof.
     eapply rt_trans.
     apply rt_step.
     repeat (apply RES_TAU).
-    apply COM with (a := a_out 3).
+    apply COM with (a := a_out (BN 3)).
     discriminate.
     apply OUT.
     apply PAR_L.
@@ -464,9 +456,9 @@ Proof.
     
     eapply wb_trans.
     change
-      (Res (Res (Res (Res ($ s {{v {}>Var}}; u + 4; r + 4; [] $)))))
+      (Res (Res (Res (Res ($ s {{v {}> (Var <<< BV) }}; u + 4; r + 4; [] $)))))
     with
-      ((Res ^^ 4) ($ s {{v {}>Var}}; u + 4; r + 4; [] $)).
+      ((Res ^^ 4) ($ s {{v {}> (Var <<< BV)}}; u + 4; r + 4; [] $)).
     apply res_n_encoding with (n := 4).
     
     apply wb_ref.
@@ -521,7 +513,7 @@ Proof.
     apply wb_con with 
       (c := (CRes (CRes (CParL
         (CHole)
-        (In 0 ($ t; 3 + u; 3 + r; [(0, 0)] $))
+        (In (BN 0) ($ t; 3 + u; 3 + r; [(0, 0)] $))
       )))).
     apply Hsim.
     simpl.
@@ -541,16 +533,16 @@ Proof.
     
     apply wb_con with 
       (c := (CRes (CRes (CRes (CRes (CParR 
-        (In 3 (In 2 (Out 1 (Out 2 (Out 3 (Par 
-          (Link 2 (9 + u))
+        (In (BN 3) (In (BN 2) (Out (BN 1) (Out (BN 2) (Out (BN 3) (Par 
+          (Link (BN 2) (BN (9 + u)))
           (Par 
-            (Link 1 (9 + r)) 
-            (Link 0 3)
+            (Link (BN 1) (BN (9 + r))) 
+            (Link (BN 0) (BN 3))
           )
         ))))))
         (CParL
           CHole
-          (Out 1 ($ v; [] $))
+          (Out (BN 1) ($ v; [] $))
         ) 
       )))))).
     apply Hsim.

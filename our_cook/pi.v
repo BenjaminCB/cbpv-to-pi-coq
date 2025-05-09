@@ -4,24 +4,28 @@ Import ListNotations.
 Require Import Nat.
 Require Import Bool.
 Require Import Coq.Relations.Relation_Operators.
+From Coq Require Import String Ascii.
 
 Notation "f >>> g" := (compose g f) (at level 40, left associativity).
 Notation "g <<< f" := (compose g f) (at level 40, left associativity).
 
+Inductive name : Type :=
+| BN (n : nat)
+| FN (s : string).
+
 Inductive proc : Type :=
-| In (n : nat) (p : proc)
-| Out (n : nat) (p : proc)
+| In (ch : name) (p : proc)
+| Out (ch : name) (p : proc)
 | Res (p : proc)
 | Rep (p : proc)
 | Par (p q : proc)
-| Link (n m : nat)
+| Link (n m : name)
 | Nil.
-
 
 Inductive context : Type :=
 | CHole 
-| CIn (n : nat) (c : context)
-| COut (n : nat) (c : context)
+| CIn (ch : name) (c : context)
+| COut (ch : name) (c : context)
 | CRes (c : context)
 | CRep (c : context)
 | CParL (c : context) (p : proc)
@@ -58,12 +62,17 @@ Definition lift_subst (subst : nat -> nat) :=
 
 Fixpoint int_subst (p : proc) (subst : nat -> nat) :=
   match p with
-  | In n p => In (subst n) (int_subst p (lift_subst subst))
-  | Out n p => Out (subst n) (int_subst p (lift_subst subst))
+  | In (FN n) p => In (FN n) (int_subst p (lift_subst subst))
+  | In (BN n) p => In (BN (subst n)) (int_subst p (lift_subst subst))
+  | Out (FN n) p => Out (FN n) (int_subst p (lift_subst subst))
+  | Out (BN n) p => Out (BN (subst n)) (int_subst p (lift_subst subst))
   | Res p => Res (int_subst p (lift_subst subst))
   | Rep p => Rep (int_subst p subst)
   | Par p q => Par (int_subst p subst) (int_subst q subst)
-  | Link n m => Link (subst n) (subst m)
+  | Link (FN n) (FN m) => Link (FN n) (FN m)
+  | Link (FN n) (BN m) => Link (FN n) (BN (subst m))
+  | Link (BN n) (FN m) => Link (BN (subst n)) (FN m)
+  | Link (BN n) (BN m) => Link (BN (subst n)) (BN (subst m))
   | Nil => Nil
   end.
 
@@ -72,14 +81,14 @@ Notation "v []> subst" := (extend_subst v subst) (at level 81, left associativit
 
 Inductive act : Set :=
   | a_tau : act
-  | a_in: nat -> act
-  | a_out: nat -> act.
+  | a_in: name -> act
+  | a_out: name -> act.
   
 Definition dual_act (a : act) := 
   match a with
   | a_tau => a_tau
-  | a_in n => a_out n
-  | a_out n => a_in n
+  | a_in ch => a_out ch
+  | a_out ch => a_in ch
   end.
   
 Notation "~ a ~" := (dual_act a) (at level 90, left associativity).
@@ -87,18 +96,26 @@ Notation "~ a ~" := (dual_act a) (at level 90, left associativity).
 Definition int_subst_act (a : act) (subst : nat -> nat) :=
   match a with
   | a_tau => a_tau
-  | a_in n => a_in (subst n)
-  | a_out n => a_out (subst n)
+  | a_in (FN n) => a_in (FN n)
+  | a_in (BN n) => a_in (BN (subst n))
+  | a_out (FN n) => a_out (FN n)
+  | a_out (BN n) => a_out (BN (subst n))
   end.
   
 Notation "a (+1)" := (int_subst_act a S) (at level 90, left associativity).
 
+Definition incName (n : name) := 
+  match n with
+  | FN n => FN n
+  | BN n => BN (S n)
+  end.
+
 Reserved Notation "P -( a )> Q" (at level 70).
 
 Inductive trans: proc -> act -> proc -> Prop := 
-  | OUT   (n : nat) (P : proc): 
+  | OUT (n : name) (P : proc): 
     (Out n P) -( a_out n )> P
-  | IN    (n : nat) (P: proc): 
+  | IN (n : name) (P: proc): 
     (In n P) -( a_in n )> P
   | PAR_L (a : act) (P Q R : proc):
     a <> a_tau -> P -( a )> R -> Par P Q -( a )> Par R (Q[[S]])
@@ -116,8 +133,8 @@ Inductive trans: proc -> act -> proc -> Prop :=
     a <> a_tau -> P -( a )> R -> Q -( ~a~ )> S -> Par P Q -( a_tau )> Res (Par R S)
   | REP (a : act) (P Q : proc): 
     (Par P (Rep P)) -( a )> Q -> (Rep P) -( a )> Q
-  | LINK (n m : nat) (P : proc):
-    Rep (In n (Out (m + 1) (Link 0 1))) -( a_in n )> P -> Link n m -( a_in n )> P
+  | LINK (n m : name) (P : proc):
+    Rep (In n (Out (incName m) (Link (BN 0) (BN 1)))) -( a_in n )> P -> Link n m -( a_in n )> P
 
   where "P -( a )> Q" := (trans P a Q).
 
@@ -148,18 +165,23 @@ Inductive trans_seq : proc -> list act -> proc -> Prop :=
 
 Fixpoint ref_n_in_proc (n : nat) (p : proc) : bool :=
   match p with
-  | In m q =>
+  | In (BN m) q =>
       if n =? m
       then true
       else ref_n_in_proc (n + 1) q
-  | Out m q =>
+  | In (FN _) q => ref_n_in_proc (n + 1) q
+  | Out (BN m) q =>
       if (n =? m)
       then true
       else ref_n_in_proc n q
+  | Out (FN _) q => ref_n_in_proc (n + 1) q
   | Res q => ref_n_in_proc (n + 1) q
   | Rep q => ref_n_in_proc n q
   | Par q q' => (ref_n_in_proc n q) || (ref_n_in_proc n q')
-  | Link m m' => (n =? m) || (n =? m')
+  | Link (FN _) (FN _) => false
+  | Link (FN _) (BN m) => (n =? m)
+  | Link (BN m) (FN _) => (n =? m)
+  | Link (BN m) (BN m') => (n =? m) || (n =? m')
   | Nil => false
   end.
 

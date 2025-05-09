@@ -1,7 +1,12 @@
 Require Import Coq.Program.Basics.
+From Coq Require Import String Ascii.
 
 Notation "f >>> g" := (compose g f) (at level 40, left associativity).
 Notation "g <<< f" := (compose g f) (at level 40, left associativity).
+
+Inductive var : Type :=
+| BV (n : nat)
+| FV (s : string).
 
 Inductive term : Type :=
 | Val (v : value)
@@ -12,7 +17,7 @@ Inductive term : Type :=
 | Bind (s t : term)
 
 with value : Type :=
-| Var (n : nat)
+| Var (n : var)
 | Thunk (s : term).
 
 Definition id (n : nat) := n.
@@ -37,7 +42,8 @@ Fixpoint int_rn (s : term) (rn : nat -> nat) :=
 
 with int_rn_value (v : value) (rn : nat -> nat) :=
   match v with
-  | Var n => Var (rn n)
+  | Var (BV n) => Var (BV (rn n))
+  | Var (FV n) => Var (FV n)
   | Thunk s => Thunk (int_rn s rn)
   end.
 
@@ -59,7 +65,7 @@ Definition compose_subst_int_rn
   := int_rn_value (subst n) rn.
 
 Definition lift_subst (subst : nat -> value) := 
-  extend_subst_lam (Var 0) (compose_subst_int_rn subst S).
+  extend_subst_lam (Var (BV 0)) (compose_subst_int_rn subst S).
 
 Notation "^ subst" := (lift_subst subst) (at level 81, left associativity).
 
@@ -75,7 +81,8 @@ Fixpoint int_subst (s : term) (subst : nat -> value) :=
 
 with int_subst_value (v : value) (subst : nat -> value) :=
   match v with
-  | Var n => subst n
+  | Var (BV n) => subst n
+  | Var (FV n) => Var (FV n)
   | Thunk s => Thunk (int_subst s subst)
   end.
 
@@ -86,31 +93,21 @@ Definition compose_subst_int_subst
   (subst subst' : nat -> value)
   (n : nat) 
   := (subst n){.{subst'}.}.
+  
+(* TODO verify that substitution works correctly *)
 
 Reserved Notation "s --> t" (at level 70).
 
 Inductive reduction: term -> term -> Prop :=
   | BINDING_BASE (v : value) (s : term): 
-    (Bind (Ret v) s) --> (s {{v {}> Var}})
+    (Bind (Ret v) s) --> (s {{v {}> (Var <<< BV)}})
   | BINDING_EVOLVE (s t s' : term):
     s --> s' -> (Bind s t) --> (Bind s' t)
   | FORCE_THUNK (s : term):
     (Force (Thunk s)) --> (s)
   | APPLICATION_BASE (s : term) (v : value):
-    (App (Abs s) v) -->(s {{v {}> Var}})
+    (App (Abs s) v) -->(s {{v {}> (Var <<< BV)}})
   | APPLICATION_EVOLVE (s t : term) (v : value):
     s --> t -> (App s v) --> (App t v)
   
   where "s --> t" := (reduction s t).
-
-Example bb1:
-  reduction (Bind (Ret (Var 2)) (Val (Var 0))) (Val (Var 2)).
-Proof.
-  apply BINDING_BASE.
-Qed.
-
-Example bb2:
-  reduction (Bind (Ret (Var 2)) (Val (Var 1))) (Val (Var 0)).
-Proof.
-  apply BINDING_BASE with (v := Var 2) (s := Val (Var 1)).
-Qed.

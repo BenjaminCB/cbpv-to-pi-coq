@@ -41,7 +41,7 @@ Hint Rewrite lift_swap_0 lift_swap_1 lift_swap_2 lift_swap_ge : subst.
 
 Lemma res_step_equals:
   forall n v p',
-    Res (Out (S n) ($ v; [] $)) -( a_out n )> p' ->
+    Res (Out (BN (S n)) ($ v; [] $)) -( a_out (BN n) )> p' ->
     p' = Res ($ v; [] $ [[swap]]).
 Proof.
 Admitted.
@@ -127,7 +127,8 @@ Proof.
   intros p' Hstep.
   inversion Hstep.
   inversion H1.
-  
+Admitted.
+(*
   (* out n and n = u *)
   destruct (Nat.eq_dec u n).
   intros p' Hstep.
@@ -157,6 +158,8 @@ Proof.
   
   (* bisim second clause *)
 Admitted.
+
+*)
 
 Lemma res_encoding: forall s u r,
   (Res (encode s (S u) (S r) [])) ~~ (encode s u r []).
