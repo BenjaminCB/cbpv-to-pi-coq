@@ -102,12 +102,13 @@ Proof.
   (* v is thunk *)
 Admitted.
 
+(* TODO think the refs need to change but lets not say that for now *)
 Lemma res_encoding_value:
-  forall v u r,
-    Res ($ Val v; S u; S r; [] $) ~~
-    ($ Val v; u; r; [] $).
+  forall v u r refs,
+    Res ($ Val v; S u; S r; refs $) ~~
+    ($ Val v; u; r; refs $).
 Proof.
-  intros v u r.
+  intros v u r refs.
   simpl.
   apply wb.
   split.
@@ -161,8 +162,9 @@ Admitted.
 
 *)
 
-Lemma res_encoding: forall s u r,
-  (Res (encode s (S u) (S r) [])) ~~ (encode s u r []).
+(* TODO think the refs need to change but lets not say that for now *)
+Lemma res_encoding: forall s u r refs,
+  (Res (encode s (S u) (S r) refs)) ~~ (encode s u r refs).
 Proof.
   cofix CH.
   intros s.
@@ -171,18 +173,19 @@ Proof.
   - admit.
 Admitted.
 
+(* TODO think the refs need to change but lets not say that for now *)
 Lemma res_n_encoding:
-forall n s u r,
-  ((Res ^^ n) (encode s (n + u) (n + r) [])) ~~ (encode s u r []).
+forall n s u r refs,
+  ((Res ^^ n) (encode s (n + u) (n + r) refs)) ~~ (encode s u r refs).
 Proof.
   intros n.
   induction n.
-  - intros s u r.
+  - intros s u r refs.
     simpl.
     replace (u + 0) with u by lia.
     replace (r + 0) with r by lia.
     apply wb_ref.
-  - intros s u r.
+  - intros s u r refs.
     eapply wb_trans.
     * simpl.
       replace (S (n + u)) with (n + S u) by lia.

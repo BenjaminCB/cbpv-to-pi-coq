@@ -16,6 +16,7 @@ Lemma link_lift:
 Proof.
 Admitted.
 
+(* TODO should probably have the implication n <> m *)
 Lemma link_handlers: forall s n m refs,
   (Res (Res (Par 
     (encode s 1 0 refs)
@@ -27,7 +28,6 @@ Lemma link_handlers: forall s n m refs,
   (encode s n m refs).
 Proof.
 Admitted.
-
 
 Lemma substitution:
   forall s v u r,
@@ -42,12 +42,19 @@ Lemma encode_reach:
 Proof.
 Admitted.
 
-Lemma redundant_subst:
+Lemma redundant_subst_term:
   forall s u r refs n subst,
     n > u -> 
     n > r -> 
     $ s ; u ; r ; refs $ [[Nat.iter n lift_subst subst]] = 
     $ s ; u ; r ; refs $.
+Proof.
+Admitted.
+
+Lemma redundant_subst_value:
+  forall v refs subst,
+    $ v ; refs $ [[lift_subst subst]] = 
+    $ v ; refs $.
 Proof.
 Admitted.
 
@@ -156,7 +163,7 @@ Proof.
       )
       (Link (BN 0) (BN (S (S (S (S (S r)))))))
     )))).
-  rewrite redundant_subst.
+  rewrite redundant_subst_term.
   apply wb_ref.
   lia.
   lia.
@@ -238,26 +245,6 @@ Proof.
     apply res_n_encoding.
 Qed.
 
-Lemma encode_value_eq :
-  forall v refs,
-    encode_value v refs = $ v ; refs $.
-Proof.
-  reflexivity.
-Qed.
-
-Lemma pointer_eq t :
-  pointer t = Rep (In (BN 0) (In (BN 0) (In (BN 1) t))).
-Proof.
-  reflexivity.
-Qed.
-
-Lemma rmUnreffedRestrictions:
-  forall s v u r,
-    (Res (Res (Res (Par ($ v; [] $) ($ s; S (S (S u)) ; S (S (S r)) ; [(0,0)] $))))) ~~
-    (Res (Par ($ v; [] $) ($ s; S u ; S r ; [(0,0)] $))).
-Proof.
-Admitted.
-
 Lemma bind_base_sound : 
   forall s v u r,
     exists P,
@@ -277,22 +264,19 @@ Proof.
     apply IN.
     apply rt_refl.
   - eapply wb_trans.
-    apply rmUnreffedRestrictions.
+    apply wb_con with
+      (c := CRes (CRes CHole)).
     apply substitution.
-Qed.
+    simpl.
 
-Lemma we_need_this_but_is_hard:
-  forall s v u r,
-    Res (Par 
-      ($ v; [] $ [[lift_subst S]])
-      ($ s; S u; S r; [(0, 0)] $)
-    ) ~~
-    (Par 
-      ($ v; [] $)
-      ($ s; u; r; [(0, 0)] $)
-    ).
-Proof.
-Admitted.
+    replace (S (S u)) with (2 + u) by lia.
+    replace (S (S r)) with (2 + r) by lia.
+    change 
+      (Res (Res ($ s {{v {}>Var <<< BV}}; 2 + u; 2 + r; [] $)))
+    with
+      ((Res ^^ 2) ($ s {{v {}>Var <<< BV}}; 2 + u; 2 + r; [] $)).
+    apply res_n_encoding.
+Qed.
 
 Lemma app_base_sound:
   forall s v u r,
@@ -443,23 +427,17 @@ Proof.
     eapply wb_trans.
     apply wb_con with
       (c := (CRes (CRes (CRes (CRes (CRes CHole)))))).
-    apply we_need_this_but_is_hard.
-    simpl.
-    
-    eapply wb_trans.
-    apply wb_con with
-      (c := (CRes (CRes (CRes (CRes CHole))))).
+    rewrite redundant_subst_value.
     apply substitution.
     simpl.
     
-    eapply wb_trans.
+    replace (S (S (S (S (S u))))) with (5 + u) by lia.
+    replace (S (S (S (S (S r))))) with (5 + r) by lia.
     change
-      (Res (Res (Res (Res ($ s {{v {}> (Var <<< BV) }}; u + 4; r + 4; [] $)))))
+      (Res (Res (Res (Res (Res ($ s {{v {}> (Var <<< BV) }}; 5 + u; 5 + r; [] $))))))
     with
-      ((Res ^^ 4) ($ s {{v {}> (Var <<< BV)}}; u + 4; r + 4; [] $)).
-    apply res_n_encoding with (n := 4).
-    
-    apply wb_ref.
+      ((Res ^^ 5) ($ s {{v {}> (Var <<< BV)}}; 5 + u; 5 + r; [] $)).
+    apply res_n_encoding with (n := 5).
 Qed.
 
 Lemma context_weak_transition_1:
