@@ -20,6 +20,42 @@ with value : Type :=
 | Var (n : var)
 | Thunk (s : term).
 
+Inductive wf_var : nat -> var -> Prop :=
+  | WF_BV (limit : nat) (n : nat):
+    n < limit -> wf_var limit (BV n)
+  | WF_FV (limit : nat) (s : string):
+    wf_var limit (FV s).
+    
+Inductive wf_term : nat -> term -> Prop :=
+  | WF_VAL (limit : nat) (v : value):
+    wf_value limit v ->
+    wf_term limit (Val v)
+  | WF_ABS (limit : nat) (s : term):
+    wf_term (S limit) s ->
+    wf_term limit (Abs s)
+  | WF_APP (limit : nat) (s : term) (v : value):
+    wf_term limit s ->
+    wf_value limit v ->
+    wf_term limit (App s v)
+  | WF_FORCE (limit : nat) (v : value):
+    wf_value limit v ->
+    wf_term limit (Force v)
+  | WF_RET (limit : nat) (v : value):
+    wf_value limit v ->
+    wf_term limit (Ret v)
+  | WF_BIND (limit : nat) (s t : term):
+    wf_term limit s ->
+    wf_term (S limit) t ->
+    wf_term limit (Bind s t)
+
+with wf_value : nat -> value -> Prop :=
+  | WF_VAR (limit : nat) (n : var):
+    wf_var limit n ->
+    wf_value limit (Var n)
+  | WF_THUNK (limit : nat) (s : term):
+    wf_term limit s ->
+    wf_value limit (Thunk s).
+
 Definition id (n : nat) := n.
 
 Definition extend_rn (s : nat) (rn : nat -> nat) (n : nat) := 
