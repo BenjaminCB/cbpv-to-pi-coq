@@ -53,7 +53,11 @@ Inductive wf_proc : nat -> proc -> Prop :=
     wf_proc limit (Link n m)
   | WF_NIL (limit : nat):
     wf_proc limit Nil.
-  
+
+Lemma wf_proc_extend:
+  forall p n, wf_proc n p -> wf_proc (S n) p.
+Proof.
+Admitted.
 
 Inductive context : Type :=
 | CHole 
@@ -195,6 +199,77 @@ Inductive trans_seq : proc -> list act -> proc -> Prop :=
     P -(a)> Q -> Q --( A )> R -> P --( a :: A )> R
 
   where "P --( A )> Q" := (trans_seq P A Q).
+  
+Lemma wf_tau_trans:
+  forall p q n,
+    wf_proc n p ->
+    p -()> q ->
+    wf_proc n q.
+Proof.
+  intros p.
+  induction p.
+  - intros q n Hwf Hstep.
+    inversion Hstep.
+  - intros q n Hwf Hstep.
+    inversion Hstep.
+  - intros q n Hwf Hstep.
+    inversion Hstep.
+    contradiction.
+    subst.
+    apply WF_RES.
+    apply IHp.
+    inversion Hwf.
+    apply H2.
+    apply H0.
+  - intros q n Hwf Hstep.
+    admit.
+  - intros q n Hwf Hstep.
+    inversion Hstep.
+    contradiction.
+    contradiction.
+    subst.
+    
+    apply WF_PAR.
+    apply IHp1.
+    inversion Hwf.
+    apply H3.
+    unfold tau_step.
+    apply H0.
+    inversion Hwf.
+    apply H4.
+    subst.
+    
+    apply WF_PAR.
+    inversion Hwf.
+    apply H3.
+    apply IHp2.
+    inversion Hwf.
+    apply H4.
+    apply H0.
+    
+    destruct a.
+    contradiction.
+    apply WF_RES.
+    apply WF_PAR.
+    subst.
+    inversion 
+    apply wf_proc_extend.
+    inversion Hwf.
+    apply H5.
+    unfold tau_step.
+    inversion H2.
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+Qed.
 
 Fixpoint ref_n_in_proc (n : nat) (p : proc) : bool :=
   match p with

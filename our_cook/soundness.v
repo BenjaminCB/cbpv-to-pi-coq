@@ -467,6 +467,16 @@ Lemma context_weak_transition_2:
 Proof.
 Admitted.
 
+Theorem sound: 
+  forall s,
+    wf_term 0 s ->
+    forall t, 
+      s --> t -> 
+        exists P,
+          (encode' s) =()> P /\ (P ~~ (encode' t)).
+Proof.
+Qed.
+
 Theorem sound: forall s t, 
   s --> t -> 
   forall u r,
