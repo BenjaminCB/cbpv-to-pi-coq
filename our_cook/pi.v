@@ -22,6 +22,39 @@ Inductive proc : Type :=
 | Link (n m : name)
 | Nil.
 
+Inductive wf_name : nat -> name -> Prop :=
+  | WF_BN (limit : nat) (n : nat):
+    n < limit -> wf_name limit (BN n)
+  | WF_FN (limit : nat) (s : string):
+    wf_name limit (FN s).
+
+Inductive wf_proc : nat -> proc -> Prop :=
+  | WF_IN (limit : nat) (ch : name) (p : proc):
+    wf_name limit ch ->
+    wf_proc (S limit) p ->
+    wf_proc limit (In ch p)
+  | WF_OUT (limit : nat) (ch : name) (p : proc):
+    wf_name limit ch ->
+    wf_proc (S limit) p ->
+    wf_proc limit (Out ch p)
+  | WF_RES (limit : nat) (p : proc):
+    wf_proc (S limit) p ->
+    wf_proc limit (Res p)
+  | WF_REP (limit : nat) (p : proc):
+    wf_proc limit p ->
+    wf_proc limit (Rep p)
+  | WF_PAR (limit : nat) (p q : proc):
+    wf_proc limit p ->
+    wf_proc limit q ->
+    wf_proc limit (Par p q)
+  | WF_LINK (limit : nat) (n m : name):
+    wf_name limit n ->
+    wf_name limit m ->
+    wf_proc limit (Link n m)
+  | WF_NIL (limit : nat):
+    wf_proc limit Nil.
+  
+
 Inductive context : Type :=
 | CHole 
 | CIn (ch : name) (c : context)

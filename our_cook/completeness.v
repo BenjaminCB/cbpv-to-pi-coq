@@ -7,8 +7,6 @@ Require Import PeanoNat.
 From Encoding Require Export cbpv.
 From Encoding Require Export pi.
 From Encoding Require Export encoding.
-From Encoding Require Export lemmaResEncoding.
-From Encoding Require Export soundness.
 
 
 Lemma app_complete: forall P s v u r,
@@ -25,71 +23,87 @@ Proof.
   split.
 Admitted.
 
-Lemma force_complete: forall P v u r,
+Lemma force_complete: forall v u r P,
   ($ Force v; u; r; [] $) -( a_tau )> P ->
     exists P' t,
     P =()> P' /\
     P' ~~ ($ t; u; r; [] $) /\
     (Force v --> t \/ Force v = t).
 Proof.
-  intros P v u r Hstep.
-  inversion Hstep; subst; try congruence.
-  destruct v.
-(*  (*Mulighed 1, Muligt fremskridt*)
-  inversion Hstep; subst; try congruence.
-  inversion H0; subst; try congruence.
-  inversion H1 as [ | | | | | | | | ?a ?P1 ?Q1 ?R1 ?S1 Haout Hout Hin | | ]; subst. repeat congruence.
+  intros v u r p Hstep.
+  inversion Hstep.
   contradiction.
-  exists ($ (Force (Var n)); u; r; [] $), (Force (Var n)).
-  split.
-  Admitted.
-*)
-  (*Mulighed 2*)
-  simpl in *.
-  exists ($ Force (Var n); u; r; [] $), (Force (Var n)).
-
-  split.
-  inversion H0; subst. congruence.
-  admit.
-  split.
-  apply wb_ref.
-  right. reflexivity.
-
-(*Force Thunk s*)
-  simpl in *.
-  exists ($ (Force (Thunk s)); u; r; [] $), s.
-  split.
-  inversion H0; subst. congruence.
-  simpl. admit.
-
-  split.
-  apply wb.
-  split. intros.
-  exists p'.
-  inversion H.
-  split.
-  admit.
-  apply wb_ref.
-
-  split.
-  admit.
-  apply wb_ref.
+  inversion H0.
+  contradiction.
+  subst.
+  inversion H3.
+  subst.
+  contradiction.
+  contradiction.
+  subst.
+  inversion H1.
+  subst.
+  inversion H1.
+  subst.
+  inversion H4.
+  inversion H5.
+  subst.
   
-  intros.
-(*Muligvis ikke freskridt herfra*)
-  simpl.
+  eexists.
   eexists.
   split.
-  destruct a. 
-  apply WT_TAU.
-  apply rt_step.
-  unfold tau_step.
-  apply Hstep.
-  admit. admit.
+  - destruct v.
+    destruct n.
+    simpl.
+    unfold pointer.
+    
+    eapply rt_trans.
+    apply rt_step.
+    repeat (apply RES_TAU).
+    apply COM with (a := a_in (BN 0)).
+    discriminate.
+    apply REP.
+    apply PAR_L.
+    discriminate.
+    apply IN.
+    apply OUT.
+    
+    eapply rt_trans.
+    apply rt_step.
+    repeat (apply RES_TAU).
+    apply COM with (a := a_in (BN 0)).
+    discriminate.
+    apply PAR_L.
+    discriminate.
+    apply IN.
+    apply OUT.
+    
+    eapply rt_trans.
+    apply rt_step.
+    repeat (apply RES_TAU).
+    apply COM with (a := a_in (BN 1)).
+    discriminate.
+    apply PAR_L.
+    discriminate.
+    apply IN.
+    apply OUT.
+    
+    eapply rt_trans.
+    apply rt_step.
+    repeat (apply RES_TAU).
+    apply COM with (a := a_in (BN 1)).
+    discriminate.
+    apply PAR_L.
+    discriminate.
+    apply IN.
+    apply OUT.
 
-  admit.
-
-  left. apply FORCE_THUNK.
+    
+    
+  
+  
+  
+  
 Admitted.
 
 Lemma tau_step_bind : forall s1 s2 u r P,
@@ -113,6 +127,7 @@ Proof.
   split.
   admit.
 Admitted.
+
 
 
 Theorem complete: forall s P u r, 
