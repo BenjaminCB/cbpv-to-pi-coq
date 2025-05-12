@@ -16,11 +16,39 @@ Lemma app_complete: forall P s v u r,
       P' ~~ ($ t; u; r; [] $) /\
       (App s v --> t \/ App s v = t).
 Proof.
-  intros.
-  inversion H. contradiction.
+  intros P s v u r Hstep.
+  inversion Hstep. contradiction. subst.
+  inversion H0. contradiction. subst.
+  inversion H1. contradiction. subst.
+  inversion H2. contradiction. subst.
+  inversion H3. contradiction. contradiction. subst.
+  inversion H4. subst.
+  inversion H4. contradiction. contradiction. subst.
+(* H5 / R0 skal være ukendt da det er en videre enkodning, som helt korrekt er ukendt*)
+  inversion H5. contradiction. contradiction. subst. (* ligner rigtig meget noget man kan få i bind og app *)
   destruct v.
+  destruct n.
+  destruct s.
+(*Sker noget sjovt med H*)
+  destruct H.
+(*Får en H5 man kan bruge, har godtnok lidt mange cases*)
+(*Nået hertil^^*)
+
+(*
   eexists. eexists.
-  split.
+  - split.
+    simpl.
+
+    eapply rt_trans.
+    apply rt_step.
+    repeat (apply RES_TAU).
+    apply COM with (a := a_in (BN 0)).
+    apply REP.
+    apply PAR_L.
+    discriminate.
+    apply IN.
+    apply OUT.
+*)
 Admitted.
 
 Lemma force_complete: forall v u r P,
@@ -42,7 +70,7 @@ Proof.
   contradiction.
   subst.
   inversion H1.
-  subst.
+  subst. (* ! *)
   inversion H1.
   subst.
   inversion H4.
@@ -91,12 +119,7 @@ Proof.
     eapply rt_trans.
     apply rt_step.
     repeat (apply RES_TAU).
-    apply COM with (a := a_in (BN 1)).
-    discriminate.
     apply PAR_L.
-    discriminate.
-    apply IN.
-    apply OUT.
 
     
     
@@ -105,6 +128,7 @@ Proof.
   
   
 Admitted.
+
 
 Lemma tau_step_bind : forall s1 s2 u r P,
     ($ Bind s1 s2; u; r; [] $) -(a_tau)> P ->
@@ -119,12 +143,24 @@ Lemma tau_step_bind : forall s1 s2 u r P,
 Proof.
   intros.
   inversion H. congruence.
-  destruct H5.
+  inversion H3. contradiction. subst.
+  inversion H6. contradiction. contradiction. subst.
+  inversion H4. contradiction. contradiction. subst.
+  (*Ligner meget app*)
+
   eexists. eexists.
   split.
-  admit.
-  
-  split.
+  - eapply rt_trans.
+    apply rt_step.
+    repeat (apply RES_TAU). simpl.
+    apply COM with (a := a_in (BN 0)).
+    discriminate.
+    apply PAR_R_TAU.
+    apply REP.
+    discriminate.
+    apply IN.
+    apply OUT.
+    
   admit.
 Admitted.
 
