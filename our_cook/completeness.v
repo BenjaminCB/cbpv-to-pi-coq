@@ -28,6 +28,8 @@ Proof.
   inversion H5. contradiction. contradiction. subst. (* ligner rigtig meget noget man kan få i bind og app *)
   destruct v.
   destruct n.
+  simpl.
+  (* admit goals with terms that are not well formed *)
   destruct s.
 (*Sker noget sjovt med H*)
   destruct H.
