@@ -1,5 +1,7 @@
 Require Import Coq.Program.Basics.
 From Coq Require Import String Ascii.
+Require Import PeanoNat.
+From Coq Require Import Lia.
 
 Notation "f >>> g" := (compose g f) (at level 40, left associativity).
 Notation "g <<< f" := (compose g f) (at level 40, left associativity).
@@ -147,3 +149,44 @@ Inductive reduction: term -> term -> Prop :=
     s --> t -> (App s v) --> (App t v)
   
   where "s --> t" := (reduction s t).
+
+Lemma wf_red:
+  forall s t,
+    wf_term 0 s ->
+    s --> t ->
+    wf_term 0 t.
+Proof.
+  intros s t Hwf Hred.
+  induction Hred.
+  - inversion Hwf.
+    inversion H2.
+    subst.
+    induction s.
+    * destruct v0.
+      destruct n.
+      destruct n.
+      simpl.
+      inversion H2.
+      apply WF_VAL.
+      apply H1.
+      
+      inversion H3.
+      inversion H1.
+      inversion H7.
+      lia.
+      
+      simpl.
+      apply WF_VAL.
+      apply WF_VAR.
+      apply WF_FV.
+      
+      simpl.
+      apply WF_VAL.
+      apply WF_THUNK.
+Admitted.
+
+      
+      
+      
+    
+

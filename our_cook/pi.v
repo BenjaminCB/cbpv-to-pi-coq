@@ -252,14 +252,13 @@ Proof.
     apply WF_RES.
     apply WF_PAR.
     subst.
-Admitted.
-(*    inversion 
-    apply wf_proc_extend.
-    inversion Hwf.
-    apply H5.
-    unfold tau_step.
     inversion H2.
-Admitted. *)
+    subst.
+    inversion Hwf.
+    inversion H5.
+    apply H11.
+    subst.
+Admitted.
 
 Fixpoint ref_n_in_proc (n : nat) (p : proc) : bool :=
   match p with

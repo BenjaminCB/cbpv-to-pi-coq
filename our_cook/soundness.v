@@ -477,7 +477,7 @@ Theorem sound:
 Proof.
 Qed.
 
-Theorem sound: forall s t, 
+Theorem sound: forall s t,
   s --> t -> 
   forall u r,
     exists P,
