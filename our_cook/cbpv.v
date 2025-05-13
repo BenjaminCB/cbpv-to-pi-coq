@@ -185,8 +185,17 @@ Proof.
       apply WF_THUNK.
 Admitted.
 
-      
-      
-      
-    
+Lemma wf_term_extend:
+  forall n s,
+    wf_term n s -> wf_term (S n) s.
+Proof.
+Admitted.
+
+Lemma wf_term_subst:
+  forall s v,
+    wf_term 1 s ->
+    wf_value 0 v ->
+    wf_term 0 (s {{v {}> Var <<< BV}}).
+Proof.
+Admitted.
 

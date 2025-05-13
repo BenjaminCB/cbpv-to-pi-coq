@@ -9,15 +9,19 @@ From Encoding Require Export pi.
 From Encoding Require Export encoding.
 From Encoding Require Export lemmaResEncoding.
 
+(* TODO is this premise really the correct one *)
 Lemma link_lift: 
   forall n s u r refs,
+    wf_term 1 s ->
     Res (Par (Link (BN 0) (BN n)) ($ s ; S u ; S r ; refs $ [[Nat.iter n lift_subst S]])) ~~
     $ s ; u ; r ; refs $.
 Proof.
 Admitted.
 
+(* TODO is this premise really the correct one *)
 (* TODO should probably have the implication n <> m *)
 Lemma link_handlers: forall s n m refs,
+  wf_term 1 s ->
   (Res (Res (Par 
     (encode s 1 0 refs)
     (Par
@@ -30,20 +34,27 @@ Proof.
 Admitted.
 
 Lemma substitution:
-  forall s v u r,
-    Res (Par ($ v ; [] $) ($ s ; S u ; S r ; [(0,0)] $)) ~~
-    $ (s {{ extend_subst_lam v (Var <<< BV) }}) ; u ; r ; []$.
+  forall s v,
+    wf_term 1 s ->
+    wf_value 0 v ->
+    forall u r,
+      Res (Par ($ v ; [] $) ($ s ; S u ; S r ; [(0,0)] $)) ~~
+      $ (s {{ extend_subst_lam v (Var <<< BV) }}) ; u ; r ; []$.
 Proof.
 Admitted.
 
 Lemma encode_reach: 
   forall n s u r,
-    n <> u -> n <> r -> ref_n_in_proc n ($ s ; u ; r ; [] $) = false.
+    wf_term 0 s ->
+    n <> u -> 
+    n <> r -> 
+    ref_n_in_proc n ($ s ; u ; r ; [] $) = false.
 Proof.
 Admitted.
 
 Lemma redundant_subst_term:
   forall s u r refs n subst,
+    wf_term 0 s ->
     n > u -> 
     n > r -> 
     $ s ; u ; r ; refs $ [[Nat.iter n lift_subst subst]] = 
@@ -53,6 +64,7 @@ Admitted.
 
 Lemma redundant_subst_value:
   forall v refs subst,
+    wf_value 0 v ->
     $ v ; refs $ [[lift_subst subst]] = 
     $ v ; refs $.
 Proof.
@@ -77,6 +89,7 @@ Proof.
 Admitted.
 
 Lemma rmIsolatedProc: forall s u r,
+  wf_term 0 s ->
   (Res ^^ 6)
     (Par
        (Par (encode s 1 0 [])
@@ -87,7 +100,7 @@ Lemma rmIsolatedProc: forall s u r,
     (Par (Link (BN 1) (BN (5 + u))) (Link (BN 0) (BN (5 + r))))
   )).
 Proof.
-  intros s u r.
+  intros s u r Hwf.
   eapply wb_trans.
   apply wb_struct.
   repeat (apply con_res).
@@ -130,6 +143,7 @@ Proof.
   simpl.
   rewrite encode_reach.
   reflexivity.
+  apply Hwf.
   discriminate.
   discriminate.
   
@@ -165,6 +179,7 @@ Proof.
     )))).
   rewrite redundant_subst_term.
   apply wb_ref.
+  apply Hwf.
   lia.
   lia.
   simpl.
@@ -177,12 +192,14 @@ Proof.
   apply wb_ref.
 Qed.
 
-Lemma force_thunk_sound: 
-forall s u r,
-  exists P,
-    encode (Force (Thunk s)) u r [] =()> P /\ P ~~ encode s u r [].
+Lemma force_thunk_sound:
+  forall s,
+    wf_term 0 (Force (Thunk s)) ->
+    forall u r,
+      exists p,
+        ($ Force (Thunk s); u; r; [] $) =()> p /\ p ~~ ($ s; u; r; [] $).
 Proof.
-  intros s u r.
+  intros s Hwf u r.
   eexists.
   split.
   - eapply rt_trans.
@@ -230,28 +247,39 @@ Proof.
     apply OUT.
     
     apply rt_refl.
-    
   - eapply wb_trans.
     apply rmIsolatedProc.
+    inversion Hwf.
+    inversion H1.
+    apply H4.
     eapply wb_trans.
     apply wb_con with 
       (c := CRes (CRes (CRes CHole))).    
     simpl.
     apply link_handlers.
+    inversion Hwf.
+    inversion H1.
+    apply wf_term_extend in H4.
+    apply H4.
     simpl.
     replace (S (S (S u))) with (3 + u) by lia.
     replace (S (S (S r))) with (3 + r) by lia.
     fold ((Res ^^ 3) (encode s (3 + u) (3 + r) [])).
     apply res_n_encoding.
+    inversion Hwf.
+    inversion H1.
+    apply H4.
 Qed.
 
-Lemma bind_base_sound : 
-  forall s v u r,
-    exists P,
-      encode (Bind (Ret v) s) u r [] =()> P /\
-      P ~~ encode (s {{extend_subst_lam v (Var <<< BV)}}) u r [].
+Lemma bind_base_sound:
+  forall s v,
+    wf_term 0 (Bind (Ret v) s) ->
+    forall u r,
+      exists P,
+        $ Bind (Ret v) s ; u ; r ; [] $ =()> P /\
+        P ~~ $ (s {{v {}> Var <<< BV}}) ; u ; r ; [] $.
 Proof.
-  intros s v u r.
+  intros s v Hwf u r.
   eexists.
   split.
   - simpl.
@@ -267,6 +295,11 @@ Proof.
     apply wb_con with
       (c := CRes (CRes CHole)).
     apply substitution.
+    inversion Hwf.
+    apply H3.
+    inversion Hwf.
+    inversion H2.
+    apply H6.
     simpl.
 
     replace (S (S u)) with (2 + u) by lia.
@@ -276,15 +309,23 @@ Proof.
     with
       ((Res ^^ 2) ($ s {{v {}>Var <<< BV}}; 2 + u; 2 + r; [] $)).
     apply res_n_encoding.
+    inversion Hwf.
+    subst.
+    apply wf_term_subst.
+    apply H3.
+    inversion H2.
+    apply H1.
 Qed.
 
 Lemma app_base_sound:
-  forall s v u r,
-    exists P,
-      ($ App (Abs s) v; u; r; [] $) =()> P /\
-      P ~~ ($ s {{v {}> (Var <<< BV)}}; u; r; [] $).
+  forall s v,
+    wf_term 0 (App (Abs s) v) ->
+    forall u r,
+      exists p,
+        ($ App (Abs s) v; u; r; [] $) =()> p /\
+        p ~~ ($ s {{v {}>Var <<< BV}}; u; r; [] $).
 Proof.
-  intros s v u r.
+  intros s v Hwf u r.
   eexists.
   split.
   - simpl.
@@ -383,6 +424,9 @@ Proof.
     replace 1 with (0 + 1) by lia.
     replace (S (0 + 1)) with (1 + 1) by lia.
     apply link_lift.
+    inversion Hwf.
+    inversion H2.
+    apply H6.
     apply wb_ref.
     simpl.
     
@@ -421,6 +465,9 @@ Proof.
     apply sym.
     unfold id.
     apply link_handlers.
+    inversion Hwf.
+    inversion H2.
+    apply H6.
     simpl.
     repeat (rewrite shift_extend_proc).
     
@@ -429,6 +476,13 @@ Proof.
       (c := (CRes (CRes (CRes (CRes (CRes CHole)))))).
     rewrite redundant_subst_value.
     apply substitution.
+    inversion Hwf.
+    inversion H2.
+    apply H6.
+    inversion Hwf.
+    apply H3.
+    inversion Hwf.
+    apply H3.
     simpl.
     
     replace (S (S (S (S (S u))))) with (5 + u) by lia.
@@ -438,15 +492,20 @@ Proof.
     with
       ((Res ^^ 5) ($ s {{v {}> (Var <<< BV)}}; 5 + u; 5 + r; [] $)).
     apply res_n_encoding with (n := 5).
+    inversion Hwf.
+    apply wf_term_subst.
+    inversion H2.
+    apply H6.
+    apply H3.
 Qed.
 
 Lemma context_weak_transition_1:
   forall p q r,
     p =()> q ->
-    Res (Res (Par p r)) =()> Res (Res (Par q r)).
+    (Res (Res (Par p r))) =()> (Res (Res (Par q r))).
 Proof.
 Admitted.
-
+      
 Lemma context_weak_transition_2:
   forall p q r s,
     p =()> q ->
@@ -467,34 +526,30 @@ Lemma context_weak_transition_2:
 Proof.
 Admitted.
 
-Theorem sound: 
+Theorem sound:
   forall s,
     wf_term 0 s ->
-    forall t, 
-      s --> t -> 
+    forall t,
+      s --> t ->
+      forall u r,
         exists P,
-          (encode' s) =()> P /\ (P ~~ (encode' t)).
+          (encode s u r []) =()> P /\ (P ~~ (encode t u r [])).
 Proof.
-Qed.
-
-Theorem sound: forall s t,
-  s --> t -> 
-  forall u r,
-    exists P,
-      (encode s u r []) =()> P /\ (P ~~ (encode t u r [])).
-Proof.
-  intros s t Hred.
+  intros s Hwf t Hred.
   induction Hred.
   - apply bind_base_sound.
+    apply Hwf.
   - intros u r.
-    destruct (IHHred 1 0) as [ P [ Hstep Hsim ] ].
-    eexists.
+    inversion Hwf.
+    destruct (IHHred H2 1 0) as [ P [ Hstep Hsim ] ].
+    subst.
     simpl.
+    eexists.
     split.
     
     apply context_weak_transition_1.
     apply Hstep.
-    
+
     eapply wb_trans.
     apply wb_con with 
       (c := (CRes (CRes (CParL
@@ -505,11 +560,13 @@ Proof.
     simpl.
     
     apply wb_ref.
-    
   - apply force_thunk_sound.
+    apply Hwf.
   - apply app_base_sound.
+    apply Hwf.
   - intros u r.
-    destruct (IHHred 3 2) as [ P [ Hstep Hsim ] ].
+    inversion Hwf.
+    destruct (IHHred H2 3 2) as [ P [ Hstep Hsim ] ].
     eexists.
     simpl.
     split.
