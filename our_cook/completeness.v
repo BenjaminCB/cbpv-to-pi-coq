@@ -8,7 +8,6 @@ From Encoding Require Export cbpv.
 From Encoding Require Export pi.
 From Encoding Require Export encoding.
 
-
 Lemma app_complete: forall P s v u r,
   (($ App s v; u; r; [] $) -( a_tau )> P) ->
     exists P' t,
@@ -24,33 +23,24 @@ Proof.
   inversion H3. contradiction. contradiction. subst.
   inversion H4. subst.
   inversion H4. contradiction. contradiction. subst.
-(* H5 / R0 skal være ukendt da det er en videre enkodning, som helt korrekt er ukendt*)
-  inversion H5. contradiction. contradiction. subst. (* ligner rigtig meget noget man kan få i bind og app *)
   destruct v.
-  destruct n.
-  simpl.
-  (* admit goals with terms that are not well formed *)
-  destruct s.
-(*Sker noget sjovt med H*)
-  destruct H.
-(*Får en H5 man kan bruge, har godtnok lidt mange cases*)
-(*Nået hertil^^*)
-
-(*
+  destruct n. simpl in *.
+(* Here we have for all cases of the variable *)
+(* Now we must unfold the R0 process *)
+  destruct R0.
   eexists. eexists.
   - split.
     simpl.
-
+  
     eapply rt_trans.
     apply rt_step.
     repeat (apply RES_TAU).
-    apply COM with (a := a_in (BN 0)).
-    apply REP.
-    apply PAR_L.
-    discriminate.
-    apply IN.
-    apply OUT.
-*)
+  (*  specialize (wf_term 0 s). *)
+  (* admit goals with terms that are not well formed *)
+  (* The only cases we know that does something is:
+  - R0 is a value
+  - R0 communicates with In (BN 3), and is then stuck
+  *)
 Admitted.
 
 Lemma force_complete: forall v u r P,
