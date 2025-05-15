@@ -7,6 +7,7 @@ Require Import PeanoNat.
 From Encoding Require Export cbpv.
 From Encoding Require Export pi.
 From Encoding Require Export encoding.
+From Encoding Require Export soundness.
 
 Lemma app_complete: forall P s v u r,
   (($ App s v; u; r; [] $) -( a_tau )> P) ->
@@ -43,14 +44,17 @@ Proof.
   *)
 Admitted.
 
-Lemma force_complete: forall v u r P,
-  ($ Force v; u; r; [] $) -( a_tau )> P ->
-    exists P' t,
-    P =()> P' /\
-    P' ~~ ($ t; u; r; [] $) /\
-    (Force v --> t \/ Force v = t).
+Lemma force_complete: 
+  forall v,
+    wf_term 0 (Force v) ->
+    forall u r P,
+      ($ Force v; u; r; [] $) -( a_tau )> P ->
+        exists P' t,
+        P =()> P' /\
+        P' ~~ ($ t; u; r; [] $) /\
+        (Force v --> t \/ Force v = t).
 Proof.
-  intros v u r p Hstep.
+  intros v Hwf u r p Hstep.
   inversion Hstep.
   contradiction.
   inversion H0.
@@ -69,56 +73,107 @@ Proof.
   inversion H5.
   subst.
   
-  eexists.
-  eexists.
-  split.
-  - destruct v.
-    destruct n.
-    simpl.
+  destruct v.
+  destruct n.
+  - inversion Hwf.
+    inversion H7.
+    inversion H10.
+    lia.
+  - eexists.
+    exists (Force (Var (FV s))).
+    split.
+    2:split.
+    * simpl.
+      unfold pointer.
+      eapply rt_trans.
+      apply rt_step.
+      repeat (apply RES_TAU).
+      apply COM with (a := a_in (BN 0)).
+      discriminate.
+      apply REP.
+      apply PAR_L.
+      discriminate.
+      apply IN.
+      apply OUT.
+      eapply rt_trans.
+      apply rt_step.
+      repeat (apply RES_TAU).
+      apply COM with (a := a_in (BN 0)).
+      discriminate.
+      apply PAR_L.
+      discriminate.
+      apply IN.
+      apply OUT.
+      eapply rt_trans.
+      apply rt_step.
+      repeat (apply RES_TAU).
+      apply COM with (a := a_in (BN 1)).
+      discriminate.
+      apply PAR_L.
+      discriminate.
+      apply IN.
+      apply OUT.
+      apply rt_refl.
+    * eapply wb_trans.
+      apply rmIsolatedProc.
+      
+  - simpl.
     unfold pointer.
-    
-    eapply rt_trans.
-    apply rt_step.
-    repeat (apply RES_TAU).
-    apply COM with (a := a_in (BN 0)).
-    discriminate.
-    apply REP.
-    apply PAR_L.
-    discriminate.
-    apply IN.
-    apply OUT.
-    
-    eapply rt_trans.
-    apply rt_step.
-    repeat (apply RES_TAU).
-    apply COM with (a := a_in (BN 0)).
-    discriminate.
-    apply PAR_L.
-    discriminate.
-    apply IN.
-    apply OUT.
-    
-    eapply rt_trans.
-    apply rt_step.
-    repeat (apply RES_TAU).
-    apply COM with (a := a_in (BN 1)).
-    discriminate.
-    apply PAR_L.
-    discriminate.
-    apply IN.
-    apply OUT.
-    
-    eapply rt_trans.
-    apply rt_step.
-    repeat (apply RES_TAU).
-    apply PAR_L.
-
-    
-    
-  
-  
-  
-  
+    eexists.
+    exists s.
+    split.
+    2:split.
+    * eapply rt_trans.
+      apply rt_step.
+      repeat (apply RES_TAU).
+      apply COM with (a := a_in (BN 0)).
+      discriminate.
+      apply REP.
+      apply PAR_L.
+      discriminate.
+      apply IN.
+      apply OUT.
+      eapply rt_trans.
+      apply rt_step.
+      repeat (apply RES_TAU).
+      apply COM with (a := a_in (BN 0)).
+      discriminate.
+      apply PAR_L.
+      discriminate.
+      apply IN.
+      apply OUT.
+      eapply rt_trans.
+      apply rt_step.
+      repeat (apply RES_TAU).
+      apply COM with (a := a_in (BN 1)).
+      discriminate.
+      apply PAR_L.
+      discriminate.
+      apply IN.
+      apply OUT.
+      apply rt_refl.
+    * inversion Hwf.
+      inversion H7.
+      eapply wb_trans.
+      apply rmIsolatedProc.
+      apply H10.
+      eapply wb_trans.
+      apply wb_con with
+        (c := CRes (CRes (CRes CHole))).
+      apply link_handlers.
+      apply wf_term_extend in H10 as H11.
+      apply H11.
+      simpl.
+      change
+        (Res (Res (Res ($ s; S (S (S u)); S (S (S r)); [] $))))
+      with 
+        ((Res ^^ 3) (((($ s; S (S (S u)); S (S (S r)); [] $))))).
+      replace (S (S (S u))) with (3 + u) by lia.
+      replace (S (S (S r))) with (3 + r) by lia.
+      apply res_n_encoding.
+      apply H10.
+    * left.
+      apply FORCE_THUNK.
 Admitted.
 
 
@@ -147,6 +202,8 @@ Proof.
     repeat (apply RES_TAU). simpl.
     apply COM with (a := a_in (BN 0)).
     discriminate.
+Admitted.
+(*
     apply PAR_R_TAU.
     apply REP.
     discriminate.
@@ -155,17 +212,20 @@ Proof.
     
   admit.
 Admitted.
+*)
 
 
-
-Theorem complete: forall s P u r, 
-  (encode s u r []) -( a_tau )> P -> 
-    exists P' t,
-      P =()> P' /\
-      P' ~~ encode t u r [] /\
-      (s --> t \/ s = t).
+Theorem complete: 
+  forall s,
+    wf_term 0 s ->
+      forall P u r,
+      (encode s u r []) -( a_tau )> P -> 
+        exists P' t,
+          P =()> P' /\
+          P' ~~ encode t u r [] /\
+          (s --> t \/ s = t).
 Proof.
-  intros s P u r H.
+  intros s Hwf P u r H.
   induction s as [| | s1 IH1 s2 IH2 | v | |].
   - inversion H.
   - inversion H.
