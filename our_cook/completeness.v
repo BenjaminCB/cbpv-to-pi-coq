@@ -44,6 +44,69 @@ Proof.
   *)
 Admitted.
 
+Lemma nil_proc_1:
+  forall u r s,
+    Res
+      (Res
+         (Par (Res (Link (BN 0) (BN (S (S (S u))))))
+            (Res (Par (Link (BN 0) (FN s)) (Link (BN 0) (BN (S (S (S r))))))))) ~~
+    Nil.
+Proof.
+  intros u r s.
+  apply wb.
+  split.
+  all:intros a.
+  all:destruct a.
+Admitted.
+
+Lemma nil_proc_2:
+  forall u r s,
+    Nil ~~
+    Res
+      (Res
+         (Par
+            (Out (BN 1)
+               (Rep (In (BN 0) (In (BN 0) (In (BN 1) (Link (BN 0) (FN s)))))))
+            (In (BN 1)
+               (Out (BN 0)
+                  (Out (BN 0)
+                     (Out (BN 1)
+                        (Par (Link (BN 1) (BN (S (S (S (S (S (S u))))))))
+                           (Link (BN 0) (BN (S (S (S (S (S (S r))))))))))))))).
+Proof.
+  intros u r s.
+  apply wb.
+  split.
+  
+  intros a p' Hstep.
+  inversion Hstep.
+  
+  intros a q' Hstep.
+  exists Nil.
+  destruct a.
+  - split.
+  
+    apply WT_TAU.
+    apply rt_refl.
+    
+    inversion Hstep; subst.
+    contradiction.
+    inversion H0; subst.
+    contradiction.
+    inversion H1; subst.
+    contradiction.
+    contradiction.
+    inversion H2; subst.
+    inversion H2; subst.
+    rename S into T.
+    inversion H4; inversion H5; subst.
+    
+    
+    
+  
+  
+Admitted.
+
 Lemma force_complete: 
   forall v,
     wf_term 0 (Force v) ->
@@ -115,8 +178,122 @@ Proof.
       apply OUT.
       apply rt_refl.
     * eapply wb_trans.
-      apply rmIsolatedProc.
+      apply wb_struct.
+      repeat (apply con_res).
+      eapply sg_trans.
+      apply par_flatten.
+      eapply sg_trans.
+      apply con_par.
+      eapply sg_trans.
+      apply con_par.
+      apply sym.
+      apply sg_ref.
+      apply par_assoc.
+      apply sg_ref.
+      apply par_assoc.
       
+      eapply wb_trans.
+      apply wb_con with 
+        (c := CRes (CRes CHole)).
+      eapply wb_trans.
+      apply wb_struct.
+      do 3 (apply con_res).
+      apply sg_par_res_r.
+      apply ref_n_in_proc_shift.
+      rewrite shift_extend_proc.
+      eapply wb_trans.
+      apply wb_struct.
+      do 2 (apply con_res).
+      apply sg_par_res_r.
+      apply ref_n_in_proc_shift.
+      rewrite shift_extend_proc.
+      eapply wb_trans.
+      apply wb_struct.
+      apply con_res.
+      apply sg_par_res_r.
+      apply ref_n_in_proc_shift.
+      rewrite shift_extend_proc.
+      
+      eapply wb_trans.
+      apply wb_struct.
+      apply sg_par_res_l.
+      simpl.
+      reflexivity.
+      
+      eapply wb_trans.
+      apply wb_par.
+      apply res_rep_in_0.
+      apply wb_ref.
+      
+      eapply wb_trans.
+      apply wb_struct.
+      eapply sg_trans.
+      apply sym.
+      apply del_nil.
+      repeat (
+        simpl;
+        unfold compose;
+        unfold id
+      ).
+      
+      eapply wb_trans.
+      apply wb_struct.
+      do 2 (apply con_res).
+      eapply sg_trans.
+      apply con_res.
+      apply con_par.
+      apply sym.
+      apply sg_ref.
+      eapply sg_trans.
+      apply con_res.
+      apply par_assoc.
+      apply sg_par_res_r.
+      simpl.
+      reflexivity.
+      simpl.
+      unfold id.
+      
+      eapply wb_trans.
+      apply wb_struct.
+      apply con_res.
+      apply sg_par_res_l.
+      simpl.
+      reflexivity.
+      repeat (
+        simpl;
+        unfold compose;
+        unfold id
+      ).
+      
+      eapply wb_trans.
+      apply wb_struct.
+      eapply sg_trans.
+      apply con_res.
+      apply add_nil.
+      eapply sg_trans.
+      apply sg_par_res_r.
+      simpl.
+      reflexivity.
+      repeat (
+        simpl;
+        unfold compose;
+        unfold id
+      ).
+      eapply sg_trans.
+      apply con_par.
+      apply sg_ref.
+      apply res_nil.
+      apply del_nil.
+      apply wb_ref.
+      simpl.
+      unfold pointer.
+      
+      apply wb_trans with
+        (q := Nil).
+      apply nil_proc_1.
+      apply nil_proc_2.
+    * right.
+      reflexivity.
   - simpl.
     unfold pointer.
     eexists.
@@ -174,8 +351,7 @@ Proof.
       apply H10.
     * left.
       apply FORCE_THUNK.
-Admitted.
-
+Qed.
 
 Lemma tau_step_bind : forall s1 s2 u r P,
     ($ Bind s1 s2; u; r; [] $) -(a_tau)> P ->

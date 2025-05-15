@@ -295,6 +295,7 @@ Reserved Notation "P === Q" (at level 70).
 Inductive struct_cong : proc -> proc -> Prop :=
   | add_nil : forall p, p === (Par p Nil)
   | del_nil : forall p, (Par p Nil) === p
+  | res_nil : (Res Nil) === Nil
   | sym : forall p q, (Par p q) === (Par q p)
   | con_par : forall p q r s, p === r -> q === s -> (Par p q) === (Par r s) 
   | con_res : forall p q, p === q -> (Res p) === (Res q)
