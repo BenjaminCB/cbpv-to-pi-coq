@@ -9,7 +9,37 @@ From Encoding Require Export pi.
 From Encoding Require Export encoding.
 From Encoding Require Export soundness.
 
-Lemma app_complete: forall P s v u r,
+Lemma app_complete: 
+  forall s v u r p,
+    wf_term 0 (App s v) ->
+    $ App s v ; u ; r ; [] $ -( a_tau )> p ->
+    ( wf_term 0 s ->
+      $ s ; u ; r ; [] $ -( a_tau )> p ->
+      exists q t,
+        p =()> q /\
+        (q ~~ $ t ; u ; r ; [] $) /\ (s --> t \/ s = t)
+    ) ->
+    exists q t,
+      p =()> q /\
+      (q ~~ $ t ; u ; r ; [] $) /\
+      (App s v --> t \/ App s v = t).
+Proof.
+  intros s v u r p Hwf Hstep IH.
+  inversion Hwf.
+  
+  destruct s.
+  - eexists.
+    exists (App (Val v1) v).
+    split.
+    
+    
+
+    
+    
+  
+Admitted.
+
+Lemma app_complete': forall P s v u r,
   (($ App s v; u; r; [] $) -( a_tau )> P) ->
     exists P' t,
       P =()> P' /\
@@ -405,7 +435,10 @@ Proof.
   induction s as [| | s1 IH1 s2 IH2 | v | |].
   - inversion H.
   - inversion H.
-  - apply app_complete; auto.
+  - apply app_complete.
+    apply Hwf.
+    apply H.
+    apply IH1.
   - apply force_complete; auto.
   - inversion H.
   - apply tau_step_bind; auto.
