@@ -31,6 +31,8 @@ Proof.
   - eexists.
     exists (App (Val v1) v).
     split.
+    inversion Hstep; subst.
+    contradiction.
     
     
 
@@ -383,62 +385,121 @@ Proof.
       apply FORCE_THUNK.
 Qed.
 
-Lemma tau_step_bind : forall s1 s2 u r P,
+(*
+Lemma encode_no_input:
+  forall s u r refs p n m,
+    ($ s ; u ; r ; refs $) -( Nat.iter n  (a_in m) )> p -> False.
+Proof.
+Admitted.
+*)
+
+Lemma tau_step_bind : 
+  forall s1 s2 u r P,
+    wf_term 0 (Bind s1 s2) ->
     ($ Bind s1 s2; u; r; [] $) -(a_tau)> P ->
-    ( ($ s1; u; r; [] $) -(a_tau)> P ->
+    ( wf_term 0 s1 ->
+      ($ s1; u; r; [] $) -(a_tau)> P ->
       exists (P1 : proc) (t1 : term),
         P =()> P1 /\ P1 ~~ ($ t1; u; r; [] $) /\ (s1 --> t1 \/ s1 = t1) ) ->
-    ( ($ s2; u; r; [] $) -(a_tau)> P ->
+    ( wf_term 0 s2 ->
+      ($ s2; u; r; [] $) -(a_tau)> P ->
       exists (P2 : proc) (t2 : term),
         P =()> P2 /\ P2 ~~ ($ t2; u; r; [] $) /\ (s2 --> t2 \/ s2 = t2) ) ->
     exists (P' : proc) (t : term),
       P =()> P' /\ P' ~~ ($ t; u; r; [] $) /\ (Bind s1 s2 --> t \/ Bind s1 s2 = t).
 Proof.
-  intros.
-  inversion H. congruence.
-  inversion H3. contradiction. subst.
-  inversion H6. contradiction. contradiction. subst.
-  inversion H4. contradiction. contradiction. subst.
-  (*Ligner meget app*)
-
-  eexists. eexists.
-  split.
-  - eapply rt_trans.
-    apply rt_step.
-    repeat (apply RES_TAU). simpl.
-    apply COM with (a := a_in (BN 0)).
-    discriminate.
-Admitted.
-(*
-    apply PAR_R_TAU.
-    apply REP.
-    discriminate.
-    apply IN.
-    apply OUT.
+  intros s1 s2 u r p Hwf Hstep.
+  simpl in Hstep.
+  inversion Hstep; subst.
+  contradiction.
+  inversion H0; subst.
+  contradiction.
+  inversion H1; subst.
+  - contradiction.
+  - contradiction.
+  - intros IH1 IH2.
+    eexists.
+    exists (Bind s1 s2).
+    split.
+    apply rt_refl.
+    split.
+    apply wb.
+    split.
     
-  admit.
+    intros a p' Hstep'.
+    exists p'.
+    split.
+    simpl.
+    destruct a.
+    apply WT_TAU.
+    eapply rt_trans.
+    apply rt_step.
+    repeat (apply RES_TAU).
+    apply H1.
+    apply rt_step.
+    unfold tau_step.
+    apply Hstep'.
+    eapply WT_VIS.
+    discriminate.
+    apply rt_step.
+    repeat (apply RES_TAU).
+    apply H1.
+    apply Hstep'.
+    apply rt_refl.
+    eapply WT_VIS.
+    discriminate.
+    apply rt_step.
+    repeat (apply RES_TAU).
+    apply H1.
+    apply Hstep'.
+    apply rt_refl.
+    apply wb_ref.
+    
+    intros a q' Hstep'.
+    simpl in Hstep'.
+    destruct a.
+    admit.
+    inversion Hstep'; subst.
+    inversion H4; subst.
+    inversion H6; subst.
+    
+    exfalso.
+    eapply encode_no_input with 
+      (a := a_in n (+1) (+1)).
+    reflexivity.
+    
+    elim (encode_no_input _ _ _ _ _ _ H11).
+    
+    apply encode_no_input in H11.
+    
+  - inversion H2.
+  - destruct s1.
+    * inversion H3; inversion H4; subst.
+      inversion H.
+    * inversion H3; inversion H4; subst.
+      inversion H.
+    * inversion H3; inversion H4; subst.
+      
+    
+  
+  
+  
 Admitted.
-*)
-
 
 Theorem complete: 
-  forall s,
+  forall s P u r,
     wf_term 0 s ->
-      forall P u r,
-      (encode s u r []) -( a_tau )> P -> 
-        exists P' t,
-          P =()> P' /\
-          P' ~~ encode t u r [] /\
-          (s --> t \/ s = t).
+    (encode s u r []) -( a_tau )> P -> 
+      exists P' t,
+        P =()> P' /\
+        P' ~~ encode t u r [] /\
+        (s --> t \/ s = t).
 Proof.
-  intros s Hwf P u r H.
-  induction s as [| | s1 IH1 s2 IH2 | v | |].
+  intros s P u r Hwf H.
+  induction s.
   - inversion H.
   - inversion H.
-  - apply app_complete.
-    apply Hwf.
-    apply H.
-    apply IH1.
+  - apply app_complete; auto.
   - apply force_complete; auto.
   - inversion H.
   - apply tau_step_bind; auto.
