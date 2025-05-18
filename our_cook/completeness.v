@@ -27,16 +27,45 @@ Proof.
   intros s v u r p Hwf Hstep IH.
   inversion Hwf.
   
+  specialize (IH H2).
+  
   destruct s.
   - eexists.
     exists (App (Val v1) v).
     split.
     inversion Hstep; subst.
     contradiction.
-    
-    
-
-    
+    admit.
+    admit.
+  - eexists.
+    exists (s {{v {}> (Var <<< BV)}}).
+    split.
+    * apply rt_refl.
+      inversion Hstep; subst.
+      contradiction.
+      inversion H5; subst.
+      contradiction.
+      inversion H0; subst.
+      contradiction.
+      inversion H1; subst.
+      contradiction.
+      inversion H4; subst.
+      contradiction.
+      contradiction.
+      inversion H6; subst.
+      inversion H6; subst.
+      contradiction.
+      contradiction.
+      inversion H7; subst.
+      inversion H7; subst.
+      inversion H9; inversion H10; subst.
+      simpl in H.
+      inversion H.
+      inversion H8; inversion H9; subst.
+      inversion H17; subst.
+      apply rt_refl.
+      
+      
     
   
 Admitted.
@@ -385,15 +414,27 @@ Proof.
       apply FORCE_THUNK.
 Qed.
 
-(*
 Lemma encode_no_input:
-  forall s u r refs p n m,
-    ($ s ; u ; r ; refs $) -( Nat.iter n  (a_in m) )> p -> False.
+  forall s u r refs p n,
+    ($ s ; u ; r ; refs $) -( a_in n )> p -> False.
 Proof.
 Admitted.
-*)
 
-Lemma tau_step_bind : 
+Lemma encode_u_r_bn_output:
+  forall s u r refs p n,
+    n <> u ->
+    n <> r ->
+    ($ s ; u ; r ; refs $) -( a_out (BN n) )> p -> False.
+Proof.
+Admitted.
+
+Lemma encode_no_fn_output:
+  forall s u r refs p n,
+    ($ s ; u ; r ; refs $) -( a_out (FN n) )> p -> False.
+Proof.
+Admitted.
+
+Lemma tau_step_bind:
   forall s1 s2 u r P,
     wf_term 0 (Bind s1 s2) ->
     ($ Bind s1 s2; u; r; [] $) -(a_tau)> P ->
@@ -458,20 +499,69 @@ Proof.
     intros a q' Hstep'.
     simpl in Hstep'.
     destruct a.
-    admit.
+    
+    inversion Hstep'; subst.
+    contradiction.
+    inversion H3; subst.
+    contradiction.
+    inversion H4; subst.
+    contradiction.
+    contradiction.
+    destruct s1.
+    * simpl in H5.
+      inversion H5.
+    * simpl in H5.
+      inversion H5.
+    * 
+      
+    
     inversion Hstep'; subst.
     inversion H4; subst.
     inversion H6; subst.
+    destruct n.
+    1,2:simpl in H11.
+    1,2:exfalso.
+    1,2:eapply encode_no_input.
+    1,2:apply H11.
+    destruct n.
+    1,2:simpl in H11.
+    1,2:inversion H11.
+    1,2:destruct n.
+    1,2,3,4:simpl in H9.
+    1,2,3,4:inversion H9.
+    1,2:destruct n.
+    1,2:simpl in H8.
+    1,2:inversion H8.
+    1,2:inversion H5.
+
+    inversion Hstep'; subst.
+    inversion H4; subst.
+    inversion H6; subst.
+    destruct n.
+    1,2:simpl in H11.
+    1,2:exfalso.
+    eapply encode_u_r_bn_output with
+      (n := S (S n))
+      (u := 1)
+      (r := 0).
+    1,2:lia.
+    apply H11.
+    eapply encode_no_fn_output.
+    apply H11.
+    inversion H11; subst.
+    destruct n.
+    1,2:simpl in H.
+    1,2:inversion H.
+    1,2:destruct n.
+    1,2,3,4:simpl in H9.
+    1,2,3,4:inversion H9.
+    1,2:destruct n.
+    1,2:simpl in H8.
+    1,2:inversion H8.
+    1,2:inversion H5.
     
-    exfalso.
-    eapply encode_no_input with 
-      (a := a_in n (+1) (+1)).
+    right.
     reflexivity.
-    
-    elim (encode_no_input _ _ _ _ _ _ H11).
-    
-    apply encode_no_input in H11.
-    
   - inversion H2.
   - destruct s1.
     * inversion H3; inversion H4; subst.
