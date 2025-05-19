@@ -37,11 +37,24 @@ Proof.
     contradiction.
     admit.
     admit.
-  - eexists.
+  - exists
+      ((Res ^^ 9) (Par
+        (Par
+          (Link (BN 2) (BN (9 + u)))
+          (Par
+            (Link (BN 1) (BN (9 + r)))
+            (Link (BN 0) (BN 3))
+          )
+        )
+        (Par
+          ($ s; 2; 1; [(0, 0)] $ [[lift_subst (lift_subst (lift_subst S))]])
+          ($ v; [] $ [[lift_subst S]] [[S]] [[S]] [[S]])
+        )
+      )).
     exists (s {{v {}> (Var <<< BV)}}).
     split.
-    * apply rt_refl.
-      inversion Hstep; subst.
+    2:split.
+    * inversion Hstep; subst.
       contradiction.
       inversion H5; subst.
       contradiction.
@@ -63,8 +76,49 @@ Proof.
       inversion H.
       inversion H8; inversion H9; subst.
       inversion H17; subst.
+      (*here*)
       apply rt_refl.
       
+      inversion H17; subst.
+      inversion H16; subst.
+      inversion H16; subst.
+      inversion H16; inversion H18; subst.
+      simpl in H.
+      inversion H.
+    * inversion Hstep; subst.
+      contradiction.
+      inversion H5; subst.
+      contradiction.
+      inversion H0; subst.
+      contradiction.
+      inversion H1; subst.
+      contradiction.
+      inversion H4; subst.
+      contradiction.
+      contradiction.
+      inversion H6; subst.
+      inversion H6; subst.
+      contradiction.
+      contradiction.
+      inversion H7; subst.
+      inversion H7; subst.
+      inversion H9; inversion H10; subst.
+      simpl in H.
+      inversion H.
+      inversion H8; inversion H9; subst.
+      inversion H17; subst.
+      
+      apply rt_refl.
+      inversion H17; subst.
+      inversion H16; subst.
+      inversion H16; subst.
+      inversion H16; inversion H18; subst.
+      simpl in H.
+      inversion H.
+      
+      
+    * left.
+      apply APPLICATION_BASE.
       
     
   
