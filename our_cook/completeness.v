@@ -14,10 +14,11 @@ Lemma app_complete:
     wf_term 0 (App s v) ->
     $ App s v ; u ; r ; [] $ -( a_tau )> p ->
     ( wf_term 0 s ->
-      $ s ; u ; r ; [] $ -( a_tau )> p ->
-      exists q t,
-        p =()> q /\
-        (q ~~ $ t ; u ; r ; [] $) /\ (s --> t \/ s = t)
+      forall p u r,
+        $ s ; u ; r ; [] $ -( a_tau )> p ->
+        exists q t,
+          p =()> q /\
+          (q ~~ $ t ; u ; r ; [] $) /\ (s --> t \/ s = t)
     ) ->
     exists q t,
       p =()> q /\
@@ -29,14 +30,16 @@ Proof.
   
   specialize (IH H2).
   
+  inversion Hstep; subst; clear Hstep.
+  contradiction.
+  inversion H5; subst; clear H5.
+  contradiction.
+  inversion H0; subst; clear H0.
+  contradiction.
+  inversion H1; subst; clear H1.
+  contradiction.
   destruct s.
-  - eexists.
-    exists (App (Val v1) v).
-    split.
-    inversion Hstep; subst.
-    contradiction.
-    admit.
-    admit.
+  - admit.
   - exists
       ((Res ^^ 9) (Par
         (Par
@@ -54,72 +57,108 @@ Proof.
     exists (s {{v {}> (Var <<< BV)}}).
     split.
     2:split.
-    * inversion Hstep; subst.
-      contradiction.
-      inversion H5; subst.
-      contradiction.
-      inversion H0; subst.
-      contradiction.
-      inversion H1; subst.
-      contradiction.
-      inversion H4; subst.
+    * inversion H0; subst; clear H0.
       contradiction.
       contradiction.
-      inversion H6; subst.
-      inversion H6; subst.
+      inversion H1; subst; clear H1.
+      inversion H1; subst; clear H1.
       contradiction.
       contradiction.
-      inversion H7; subst.
-      inversion H7; subst.
-      inversion H9; inversion H10; subst.
+      inversion H0; subst; clear H0.
+      inversion H0; subst; clear H0.
+      inversion H5; inversion H6; subst; clear H5; clear H6.
       simpl in H.
       inversion H.
-      inversion H8; inversion H9; subst.
-      inversion H17; subst.
-      (*here*)
+      inversion H5; inversion H6; subst; clear H5; clear H6.
+      inversion H13; subst; clear H13.
+      eapply rt_trans.
+      apply rt_step.
+      repeat (apply RES_TAU).
+      apply COM with (a := a_in (BN 2)).
+      discriminate.
+      apply IN.
+      apply PAR_R.
+      discriminate.
+      simpl.
+      apply OUT.
+      eapply rt_trans.
+      apply rt_step.
+      repeat (apply RES_TAU).
+      apply COM with (a := a_out (BN 1)).
+      discriminate.
+      apply OUT.
+      apply PAR_L.
+      discriminate.
+      simpl.
+      apply IN.
+      eapply rt_trans.
+      apply rt_step.
+      repeat (apply RES_TAU).
+      apply COM with (a := a_out (BN 2)).
+      discriminate.
+      apply OUT.
+      apply PAR_L.
+      discriminate.
+      apply IN.
+      eapply rt_trans.
+      apply rt_step.
+      repeat (apply RES_TAU).
+      apply COM with (a := a_out (BN 3)).
+      discriminate.
+      apply OUT.
+      apply PAR_L.
+      discriminate.
+      apply IN.
       apply rt_refl.
-      
-      inversion H17; subst.
-      inversion H16; subst.
-      inversion H16; subst.
-      inversion H16; inversion H18; subst.
+      inversion H13; subst.
+      inversion H12; subst.
+      inversion H12; subst.
+      inversion H12; inversion H14; subst.
       simpl in H.
       inversion H.
-    * inversion Hstep; subst.
-      contradiction.
-      inversion H5; subst.
-      contradiction.
-      inversion H0; subst.
-      contradiction.
-      inversion H1; subst.
-      contradiction.
-      inversion H4; subst.
-      contradiction.
-      contradiction.
-      inversion H6; subst.
-      inversion H6; subst.
-      contradiction.
-      contradiction.
-      inversion H7; subst.
-      inversion H7; subst.
-      inversion H9; inversion H10; subst.
-      simpl in H.
-      inversion H.
-      inversion H8; inversion H9; subst.
-      inversion H17; subst.
-      
-      apply rt_refl.
-      inversion H17; subst.
-      inversion H16; subst.
-      inversion H16; subst.
-      inversion H16; inversion H18; subst.
-      simpl in H.
-      inversion H.
-      
-      
+    * apply app_base_substitution.
+      apply Hwf.
     * left.
       apply APPLICATION_BASE.
-      
+  - admit.
+  - admit.
+  - inversion H0; subst; clear H0.
+    contradiction.
+    contradiction.
+    inversion H1; subst; clear H1.
+    inversion H1; subst; clear H1.
+    contradiction.
+    contradiction.
+    inversion H0; subst; clear H0.
+    inversion H0; subst; clear H0.
+    inversion H5; inversion H6; subst; clear H5; clear H6.
+    simpl in H.
+    inversion H.
+    inversion H5; inversion H6; subst; clear H5; clear H6.
+    inversion H13; subst; clear H13.
+    
+    inversion H13.
+    inversion H12.
+    inversion H12.
+    inversion H12; inversion H14; subst; clear H12; clear H14.
+    inversion H.
+  - inversion H0; subst; clear H0.
+    contradiction.
+    contradiction.
+    inversion H1; subst; clear H1.
+    inversion H1; subst; clear H1.
+    contradiction.
+    contradiction.
+    
+    specialize (IH R0 1 0 H0) as [q [t [Hτ [Hbisim Hred] ] ] ].
+    inversion H0; subst; clear H0.
+    
+    contradiction.
+    inversion H1; subst; clear H1.
+    contradiction.
+    inversion H0; subst; clear H0.
+    contradiction.
+    contradiction.
     
   
 Admitted.
@@ -639,8 +678,9 @@ Theorem complete:
         P' ~~ encode t u r [] /\
         (s --> t \/ s = t).
 Proof.
-  intros s P u r Hwf H.
+  intros s.
   induction s.
+  all:intros P u r Hwf H.
   - inversion H.
   - inversion H.
   - apply app_complete; auto.

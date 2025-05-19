@@ -317,6 +317,141 @@ Proof.
     apply H1.
 Qed.
 
+Lemma app_base_substitution:
+  forall s v u r,
+    wf_term 0 (App (Abs s) v) ->
+    ((Res ^^ 9) (Par
+      (Par
+        (Link (BN 2) (BN (9 + u)))
+        (Par
+          (Link (BN 1) (BN (9 + r)))
+          (Link (BN 0) (BN 3))
+        )
+      )
+      (Par
+        ($ s; 2; 1; [(0, 0)] $ [[lift_subst (lift_subst (lift_subst S))]])
+        ($ v; [] $ [[lift_subst S]] [[S]] [[S]] [[S]])
+      )
+    )) ~~
+    ($ s {{v {}>Var <<< BV}}; u; r; [] $).
+Proof.
+  intros s v u r Hwf.
+  change
+    (lift_subst (lift_subst (lift_subst S)))
+  with
+    (Nat.iter 3 lift_subst S).
+  (* working towards applyng link *)
+  eapply wb_trans.
+  apply wb_con with
+    (c := (CRes (CRes (CRes (CRes (CRes (CRes (CRes (CRes CHole))))))))).
+  eapply wb_trans.
+  apply wb_struct.
+  apply con_res.
+  apply con_par.
+  apply sym.
+  apply sg_ref.
+  eapply wb_trans.
+  apply wb_struct.
+  apply con_res.
+  apply con_par.
+  apply con_par.
+  apply sym.
+  apply sg_ref.
+  apply sg_ref.
+  eapply wb_trans.
+  apply wb_struct.
+  apply con_res.
+  apply con_par.
+  apply par_assoc.
+  apply sg_ref.
+  eapply wb_trans.
+  apply wb_struct.
+  apply con_res.
+  apply par_swap.
+  eapply wb_trans.
+  apply wb_struct.
+  apply sg_par_res_l.
+  simpl.
+  apply ref_n_in_proc_shift.
+  apply wb_par.
+  replace 1 with (0 + 1) by lia.
+  replace (S (0 + 1)) with (1 + 1) by lia.
+  apply link_lift.
+  inversion Hwf.
+  inversion H2.
+  apply H6.
+  apply wb_ref.
+  simpl.
+  
+  eapply wb_trans.
+  apply wb_con with
+    (c := (CRes (CRes (CRes (CRes (CRes (CRes CHole))))))).
+  eapply wb_trans.
+  apply wb_struct.
+  repeat (apply con_res).
+  eapply sg_trans.
+  apply con_par.
+  apply sg_ref.
+  apply sym.
+  eapply sg_trans.
+  apply sym.
+  apply par_assoc.
+  eapply wb_trans.
+  apply wb_struct.
+  eapply sg_trans.
+  apply con_res.
+  apply sg_par_res_r.
+  rewrite shift_extend_proc.
+  apply ref_n_in_proc_shift.
+  apply sg_par_res_r.
+  repeat (rewrite shift_extend_proc).
+  apply ref_n_in_proc_shift.
+  apply wb_par.
+  apply wb_ref.
+  eapply wb_trans.
+  apply wb_struct.
+  repeat (apply con_res).
+  eapply sg_trans.
+  apply sym.
+  apply con_par.
+  apply sg_ref.
+  apply sym.
+  unfold id.
+  apply link_handlers.
+  inversion Hwf.
+  inversion H2.
+  apply H6.
+  simpl.
+  repeat (rewrite shift_extend_proc).
+  
+  eapply wb_trans.
+  apply wb_con with
+    (c := (CRes (CRes (CRes (CRes (CRes CHole)))))).
+  rewrite redundant_subst_value.
+  apply substitution.
+  inversion Hwf.
+  inversion H2.
+  apply H6.
+  inversion Hwf.
+  apply H3.
+  inversion Hwf.
+  apply H3.
+  simpl.
+  
+  replace (S (S (S (S (S u))))) with (5 + u) by lia.
+  replace (S (S (S (S (S r))))) with (5 + r) by lia.
+  change
+    (Res (Res (Res (Res (Res ($ s {{v {}> (Var <<< BV) }}; 5 + u; 5 + r; [] $))))))
+  with
+    ((Res ^^ 5) ($ s {{v {}> (Var <<< BV)}}; 5 + u; 5 + r; [] $)).
+  apply res_n_encoding with (n := 5).
+  inversion Hwf.
+  apply wf_term_subst.
+  inversion H2.
+  apply H6.
+  apply H3.
+Qed.
+
 Lemma app_base_sound:
   forall s v,
     wf_term 0 (App (Abs s) v) ->
@@ -383,120 +518,8 @@ Proof.
     
     apply rt_refl.
 
-  - change
-      (lift_subst (lift_subst (lift_subst S)))
-    with
-      (Nat.iter 3 lift_subst S).
-    (* working towards applyng link *)
-    eapply wb_trans.
-    apply wb_con with
-      (c := (CRes (CRes (CRes (CRes (CRes (CRes (CRes (CRes CHole))))))))).
-    eapply wb_trans.
-    apply wb_struct.
-    apply con_res.
-    apply con_par.
-    apply sym.
-    apply sg_ref.
-    eapply wb_trans.
-    apply wb_struct.
-    apply con_res.
-    apply con_par.
-    apply con_par.
-    apply sym.
-    apply sg_ref.
-    apply sg_ref.
-    eapply wb_trans.
-    apply wb_struct.
-    apply con_res.
-    apply con_par.
-    apply par_assoc.
-    apply sg_ref.
-    eapply wb_trans.
-    apply wb_struct.
-    apply con_res.
-    apply par_swap.
-    eapply wb_trans.
-    apply wb_struct.
-    apply sg_par_res_l.
-    simpl.
-    apply ref_n_in_proc_shift.
-    apply wb_par.
-    replace 1 with (0 + 1) by lia.
-    replace (S (0 + 1)) with (1 + 1) by lia.
-    apply link_lift.
-    inversion Hwf.
-    inversion H2.
-    apply H6.
-    apply wb_ref.
-    simpl.
-    
-    eapply wb_trans.
-    apply wb_con with
-      (c := (CRes (CRes (CRes (CRes (CRes (CRes CHole))))))).
-    eapply wb_trans.
-    apply wb_struct.
-    repeat (apply con_res).
-    eapply sg_trans.
-    apply con_par.
-    apply sg_ref.
-    apply sym.
-    eapply sg_trans.
-    apply sym.
-    apply par_assoc.
-    eapply wb_trans.
-    apply wb_struct.
-    eapply sg_trans.
-    apply con_res.
-    apply sg_par_res_r.
-    rewrite shift_extend_proc.
-    apply ref_n_in_proc_shift.
-    apply sg_par_res_r.
-    repeat (rewrite shift_extend_proc).
-    apply ref_n_in_proc_shift.
-    apply wb_par.
-    apply wb_ref.
-    eapply wb_trans.
-    apply wb_struct.
-    repeat (apply con_res).
-    eapply sg_trans.
-    apply sym.
-    apply con_par.
-    apply sg_ref.
-    apply sym.
-    unfold id.
-    apply link_handlers.
-    inversion Hwf.
-    inversion H2.
-    apply H6.
-    simpl.
-    repeat (rewrite shift_extend_proc).
-    
-    eapply wb_trans.
-    apply wb_con with
-      (c := (CRes (CRes (CRes (CRes (CRes CHole)))))).
-    rewrite redundant_subst_value.
-    apply substitution.
-    inversion Hwf.
-    inversion H2.
-    apply H6.
-    inversion Hwf.
-    apply H3.
-    inversion Hwf.
-    apply H3.
-    simpl.
-    
-    replace (S (S (S (S (S u))))) with (5 + u) by lia.
-    replace (S (S (S (S (S r))))) with (5 + r) by lia.
-    change
-      (Res (Res (Res (Res (Res ($ s {{v {}> (Var <<< BV) }}; 5 + u; 5 + r; [] $))))))
-    with
-      ((Res ^^ 5) ($ s {{v {}> (Var <<< BV)}}; 5 + u; 5 + r; [] $)).
-    apply res_n_encoding with (n := 5).
-    inversion Hwf.
-    apply wf_term_subst.
-    inversion H2.
-    apply H6.
-    apply H3.
+  - apply app_base_substitution.
+    apply Hwf.
 Qed.
 
 Lemma context_weak_transition_1:
