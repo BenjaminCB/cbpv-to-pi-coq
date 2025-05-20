@@ -684,11 +684,6 @@ Proof.
     inversion H2; subst.
     rename S into T.
     inversion H4; inversion H5; subst.
-    
-    
-    
-  
-  
 Admitted.
 
 Lemma force_complete: 
@@ -942,129 +937,64 @@ Lemma tau_step_bind:
     wf_term 0 (Bind s1 s2) ->
     ($ Bind s1 s2; u; r; [] $) -(a_tau)> P ->
     ( wf_term 0 s1 ->
-      ($ s1; u; r; [] $) -(a_tau)> P ->
-      exists (P1 : proc) (t1 : term),
-        P =()> P1 /\ P1 ~~ ($ t1; u; r; [] $) /\ (s1 --> t1 \/ s1 = t1) ) ->
+      forall (P : proc) (u r : nat),
+        ($ s1; u; r; [] $) -(a_tau)> P ->
+        exists (P1 : proc) (t1 : term),
+          P =()> P1 /\ P1 ~~ ($ t1; u; r; [] $) /\ (s1 --> t1 \/ s1 = t1)
+    ) ->
     ( wf_term 0 s2 ->
-      ($ s2; u; r; [] $) -(a_tau)> P ->
-      exists (P2 : proc) (t2 : term),
-        P =()> P2 /\ P2 ~~ ($ t2; u; r; [] $) /\ (s2 --> t2 \/ s2 = t2) ) ->
+      forall (P : proc) (u r : nat),
+        ($ s2; u; r; [] $) -(a_tau)> P ->
+        exists (P2 : proc) (t2 : term),
+          P =()> P2 /\ P2 ~~ ($ t2; u; r; [] $) /\ (s2 --> t2 \/ s2 = t2)
+    ) ->
     exists (P' : proc) (t : term),
       P =()> P' /\ P' ~~ ($ t; u; r; [] $) /\ (Bind s1 s2 --> t \/ Bind s1 s2 = t).
 Proof.
-  intros s1 s2 u r p Hwf Hstep.
+  intros s1 s2 u r p Hwf Hstep IH1 IH2.
+  inversion Hwf.
+  
+  specialize (IH1 H2).
+  
   simpl in Hstep.
-  inversion Hstep; subst.
+  inversion Hstep; subst; clear Hstep.
   contradiction.
-  inversion H0; subst.
+  inversion H5; subst; clear H5.
   contradiction.
-  inversion H1; subst.
+  inversion H0; subst; clear H0.
   - contradiction.
   - contradiction.
-  - intros IH1 IH2.
-    eexists.
-    exists (Bind s1 s2).
-    split.
-    apply rt_refl.
-    split.
-    apply wb.
-    split.
-    
-    intros a p' Hstep'.
-    exists p'.
-    split.
-    simpl.
-    destruct a.
-    apply WT_TAU.
-    eapply rt_trans.
-    apply rt_step.
-    repeat (apply RES_TAU).
-    apply H1.
-    apply rt_step.
-    unfold tau_step.
-    apply Hstep'.
-    eapply WT_VIS.
-    discriminate.
-    apply rt_step.
-    repeat (apply RES_TAU).
-    apply H1.
-    apply Hstep'.
-    apply rt_refl.
-    eapply WT_VIS.
-    discriminate.
-    apply rt_step.
-    repeat (apply RES_TAU).
-    apply H1.
-    apply Hstep'.
-    apply rt_refl.
-    apply wb_ref.
-    
-    intros a q' Hstep'.
-    simpl in Hstep'.
-    destruct a.
-    
-    inversion Hstep'; subst.
-    contradiction.
-    inversion H3; subst.
-    contradiction.
-    inversion H4; subst.
-    contradiction.
-    contradiction.
+  - specialize (IH1 R 1 0 H1) as [ P1 [ t1 [ Hstep [ Hbisim Hred ] ] ] ].
     destruct s1.
-    * simpl in H5.
-      inversion H5.
-    * simpl in H5.
-      inversion H5.
+    * admit.
+    * inversion H1.
+    * eexists.
+      exists (Bind t1 s2).
+      split.
+      apply wt_tau_context with
+        (c:= CRes (CRes (CParL 
+          CHole
+          (In (BN 0) ($ s2; S (S (S u)); S (S (S r)); [(0, 0)] $))
+        ))).
+      simpl.
+      reflexivity.
+      apply Hstep.
+      simpl.
+      split.
+      apply wb_con with
+        (c:= CRes (CRes (CParL 
+          CHole
+          (In (BN 0) ($ s2; S (S (S u)); S (S (S r)); [(0, 0)] $))
+        ))).
+      apply Hbisim.
+      inversion Hred.
+      left.
+      apply BINDING_EVOLVE.
+      apply H.
+      right.
+      rewrite H.
+      reflexivity.
     * 
-      
-    
-    inversion Hstep'; subst.
-    inversion H4; subst.
-    inversion H6; subst.
-    destruct n.
-    1,2:simpl in H11.
-    1,2:exfalso.
-    1,2:eapply encode_no_input.
-    1,2:apply H11.
-    destruct n.
-    1,2:simpl in H11.
-    1,2:inversion H11.
-    1,2:destruct n.
-    1,2,3,4:simpl in H9.
-    1,2,3,4:inversion H9.
-    1,2:destruct n.
-    1,2:simpl in H8.
-    1,2:inversion H8.
-    1,2:inversion H5.
-
-    inversion Hstep'; subst.
-    inversion H4; subst.
-    inversion H6; subst.
-    destruct n.
-    1,2:simpl in H11.
-    1,2:exfalso.
-    eapply encode_u_r_bn_output with
-      (n := S (S n))
-      (u := 1)
-      (r := 0).
-    1,2:lia.
-    apply H11.
-    eapply encode_no_fn_output.
-    apply H11.
-    inversion H11; subst.
-    destruct n.
-    1,2:simpl in H.
-    1,2:inversion H.
-    1,2:destruct n.
-    1,2,3,4:simpl in H9.
-    1,2,3,4:inversion H9.
-    1,2:destruct n.
-    1,2:simpl in H8.
-    1,2:inversion H8.
-    1,2:inversion H5.
-    
-    right.
-    reflexivity.
   - inversion H2.
   - destruct s1.
     * inversion H3; inversion H4; subst.
@@ -1072,11 +1002,7 @@ Proof.
     * inversion H3; inversion H4; subst.
       inversion H.
     * inversion H3; inversion H4; subst.
-      
-    
-  
-  
-  
+
 Admitted.
 
 Theorem complete: 
