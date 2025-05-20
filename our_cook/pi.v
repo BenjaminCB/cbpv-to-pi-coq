@@ -192,6 +192,25 @@ Inductive weak_trans: proc -> act -> proc -> Prop :=
 
 Reserved Notation "P --( A )> Q" (at level 70).
 
+Fixpoint hup (c : context) :=
+  match c with
+  | CHole => false
+  | CIn _ _ => true
+  | COut _ _ => true
+  | CRes c => hup c
+  | CRep c => hup c
+  | CParL c _ => hup c
+  | CParR _ c => hup c
+  end.
+
+Lemma wt_tau_context:
+  forall c p q,
+    hup c = false ->
+    p =()> q ->
+    plug c p =()> plug c q.
+Proof.
+Admitted.
+    
 Inductive trans_seq : proc -> list act -> proc -> Prop :=
   | TransNil (P : proc): 
     P --( [] )> P

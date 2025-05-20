@@ -9,6 +9,26 @@ From Encoding Require Export pi.
 From Encoding Require Export encoding.
 From Encoding Require Export soundness.
 
+Lemma encode_no_input:
+  forall s u r refs p n,
+    ($ s ; u ; r ; refs $) -( a_in n )> p -> False.
+Proof.
+Admitted.
+
+Lemma encode_u_r_bn_output:
+  forall s u r refs p n,
+    n <> u ->
+    n <> r ->
+    ($ s ; u ; r ; refs $) -( a_out (BN n) )> p -> False.
+Proof.
+Admitted.
+
+Lemma encode_no_fn_output:
+  forall s u r refs p n,
+    ($ s ; u ; r ; refs $) -( a_out (FN n) )> p -> False.
+Proof.
+Admitted.
+
 Lemma app_complete: 
   forall s v u r p,
     wf_term 0 (App s v) ->
@@ -150,7 +170,105 @@ Proof.
     contradiction.
     contradiction.
     
-    specialize (IH R0 1 0 H0) as [q [t [Hτ [Hbisim Hred] ] ] ].
+    specialize (IH R0 3 2 H0) as [q [t [Htau [Hbisim Hred] ] ] ].
+    eexists.
+    exists (App t v).
+    split.
+    apply wt_tau_context with 
+      (c := CRes (CRes (CRes (CRes (CParR
+        (In (BN 3) (In (BN 2) (Out (BN 1) (Out (BN 2) (Out (BN 3) (Par
+          (Link (BN 2) (BN (S (S (S (S (S (S (S (S (S u)))))))))))
+          (Par
+            (Link (BN 1) (BN (S (S (S (S (S (S (S (S (S r)))))))))))
+            (Link (BN 0) (BN 3))
+          )
+        ))))))
+        (CParL
+          CHole
+          (Out (BN 1) ($ v; [] $))
+        )
+      ))))).
+    simpl.
+    reflexivity.
+    apply Htau.
+    simpl.
+    split.
+    apply wb_con with
+      (c := CRes (CRes (CRes (CRes (CParR
+        (In (BN 3) (In (BN 2) (Out (BN 1) (Out (BN 2) (Out (BN 3) (Par
+          (Link (BN 2) (BN (S (S (S (S (S (S (S (S (S u)))))))))))
+          (Par
+            (Link (BN 1) (BN (S (S (S (S (S (S (S (S (S r)))))))))))
+            (Link (BN 0) (BN 3))
+          )
+        ))))))
+        (CParL
+          CHole
+          (Out (BN 1) ($ v; [] $))
+        )
+      ))))).
+    apply Hbisim.
+    inversion Hred.
+    left.
+    apply APPLICATION_EVOLVE.
+    apply H.
+    right.
+    rewrite H.
+    reflexivity.
+    inversion H0.
+    inversion H5; inversion H6; subst; clear H5; clear H6.
+    inversion H1; subst; clear H1.
+    inversion H6; subst; clear H6.
+    destruct a.
+    contradiction.
+    exfalso.
+    destruct n.
+    1,2:eapply encode_no_input.
+    1,2:simpl in H10.
+    1,2:apply H10.
+    exfalso.
+    destruct n.
+    1,2:simpl in H10.
+    eapply encode_u_r_bn_output with
+      (u := 1)
+      (r := 0)
+      (n := S (S n)).
+    1,2:lia.
+    apply H10.
+    eapply encode_no_fn_output.
+    apply H10.
+    inversion H10; subst; clear H10.
+    destruct a.
+    contradiction.
+    1,2:destruct n.
+    1,2,3,4:simpl in H.
+    1,2,3,4:inversion H.
+    destruct a.
+    contradiction.
+    1,2:destruct n.
+    1,2,3,4:simpl in H8.
+    1,2,3,4:inversion H8.
+    destruct a.
+    contradiction.
+    1,2:destruct n.
+    1,2,3,4:simpl in H8.
+    1,2,3,4:inversion H8.
+    destruct a.
+    contradiction.
+    1,2:destruct n.
+    1,2,3,4:simpl in H7.
+    1,2,3,4:inversion H7.
+    destruct a.
+    contradiction.
+    1,2:destruct n.
+    1,2,3,4:simpl in H5.
+    1,2,3,4:inversion H5.
+    contradiction.
+   
+    
+   
+    
+    
     inversion H0; subst; clear H0.
     
     contradiction.
@@ -506,26 +624,6 @@ Proof.
     * left.
       apply FORCE_THUNK.
 Qed.
-
-Lemma encode_no_input:
-  forall s u r refs p n,
-    ($ s ; u ; r ; refs $) -( a_in n )> p -> False.
-Proof.
-Admitted.
-
-Lemma encode_u_r_bn_output:
-  forall s u r refs p n,
-    n <> u ->
-    n <> r ->
-    ($ s ; u ; r ; refs $) -( a_out (BN n) )> p -> False.
-Proof.
-Admitted.
-
-Lemma encode_no_fn_output:
-  forall s u r refs p n,
-    ($ s ; u ; r ; refs $) -( a_out (FN n) )> p -> False.
-Proof.
-Admitted.
 
 Lemma tau_step_bind:
   forall s1 s2 u r P,
