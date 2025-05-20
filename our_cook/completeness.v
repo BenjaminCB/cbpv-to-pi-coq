@@ -29,6 +29,58 @@ Lemma encode_no_fn_output:
 Proof.
 Admitted.
 
+Lemma app_val_bisim:
+  forall v0 v u r,
+    (Res
+      (Par
+         (In (BN 2)
+            (Out (BN 1)
+               (Out (BN 2)
+                  (Out (BN 3)
+                     (Par
+                        (Link (BN 2)
+                           (BN (S (S (S (S (S (S (S (S (S u)))))))))))
+                        (Par
+                           (Link (BN 1)
+                              (BN (S (S (S (S (S (S (S (S (S r)))))))))))
+                           (Link (BN 0) (BN 3))))))))
+         (Par ($ v0; [] $) (Out (BN 2) ($ v; [] $ [[lift_subst S]]))))) ~~
+    (Par
+      (In (BN 3)
+         (In (BN 2)
+            (Out (BN 1)
+               (Out (BN 2)
+                  (Out (BN 3)
+                     (Par
+                        (Link (BN 2)
+                           (BN (S (S (S (S (S (S (S (S (S u)))))))))))
+                        (Par
+                           (Link (BN 1)
+                              (BN (S (S (S (S (S (S (S (S (S r)))))))))))
+                           (Link (BN 0) (BN 3)))))))))
+      (Par (Out (BN 3) ($ v0; [] $)) (Out (BN 1) ($ v; [] $)))).
+Proof.
+Admitted.
+
+Lemma app_bind_bisim:
+  forall v0,
+    (Res (Par 
+      ($ v0; [] $)
+      (Out (BN 0) (Out (BN 0) (Out (BN 1) (Par 
+        (Link (BN 1) (BN 9)) 
+        (Link (BN 0) (BN 8))
+      ))))
+    )) ~~
+    (Par 
+      (Out (BN 1) ($ v0; [] $))
+      (In (BN 1) (Out (BN 0) (Out (BN 0) (Out (BN 1) (Par 
+        (Link (BN 1) (BN 9)) 
+        (Link (BN 0) (BN 8))
+      )))))
+    ).
+Proof.
+Admitted.
+
 Lemma app_complete: 
   forall s v u r p,
     wf_term 0 (App s v) ->
@@ -59,7 +111,35 @@ Proof.
   inversion H1; subst; clear H1.
   contradiction.
   destruct s.
-  - admit.
+  - inversion H0; subst; clear H0.
+    contradiction.
+    contradiction.
+    inversion H1; subst; clear H1.
+    inversion H1; subst; clear H1.
+    contradiction.
+    contradiction.
+    inversion H0; subst; clear H0.
+    inversion H0; subst; clear H0.
+    inversion H5; inversion H6; subst; clear H5; clear H6.
+    simpl in H.
+    inversion H.
+    inversion H5; inversion H6; subst; clear H5; clear H6.
+    inversion H13; subst; clear H13.
+    * eexists.
+      exists (App (Val v0) v).
+      split.
+      apply rt_refl.
+      split.
+      simpl.
+      apply wb_con with
+        (c := CRes (CRes (CRes (CRes CHole)))).
+      apply app_val_bisim.
+      right.
+      reflexivity.
+    * inversion H13.
+    * inversion H11.
+    * inversion H11.
+    * inversion H10.
   - exists
       ((Res ^^ 9) (Par
         (Par
@@ -140,8 +220,273 @@ Proof.
       apply Hwf.
     * left.
       apply APPLICATION_BASE.
-  - admit.
-  - admit.
+  - inversion H0; subst; clear H0.
+    contradiction.
+    contradiction.
+    inversion H1; subst; clear H1.
+    inversion H1; subst; clear H1.
+    contradiction.
+    contradiction.
+    
+    specialize (IH R0 3 2 H0) as [q [t [Htau [Hbisim Hred] ] ] ].
+    eexists.
+    exists (App t v).
+    split.
+    apply wt_tau_context with 
+      (c := CRes (CRes (CRes (CRes (CParR
+        (In (BN 3) (In (BN 2) (Out (BN 1) (Out (BN 2) (Out (BN 3) (Par
+          (Link (BN 2) (BN (S (S (S (S (S (S (S (S (S u)))))))))))
+          (Par
+            (Link (BN 1) (BN (S (S (S (S (S (S (S (S (S r)))))))))))
+            (Link (BN 0) (BN 3))
+          )
+        ))))))
+        (CParL
+          CHole
+          (Out (BN 1) ($ v; [] $))
+        )
+      ))))).
+    simpl.
+    reflexivity.
+    apply Htau.
+    simpl.
+    split.
+    apply wb_con with
+      (c := CRes (CRes (CRes (CRes (CParR
+        (In (BN 3) (In (BN 2) (Out (BN 1) (Out (BN 2) (Out (BN 3) (Par
+          (Link (BN 2) (BN (S (S (S (S (S (S (S (S (S u)))))))))))
+          (Par
+            (Link (BN 1) (BN (S (S (S (S (S (S (S (S (S r)))))))))))
+            (Link (BN 0) (BN 3))
+          )
+        ))))))
+        (CParL
+          CHole
+          (Out (BN 1) ($ v; [] $))
+        )
+      ))))).
+    apply Hbisim.
+    inversion Hred.
+    left.
+    apply APPLICATION_EVOLVE.
+    apply H.
+    right.
+    rewrite H.
+    reflexivity.
+    inversion H0.
+    inversion H5; inversion H6; subst; clear H5; clear H6.
+    inversion H1; subst; clear H1.
+    inversion H6; subst; clear H6.
+    destruct a.
+    contradiction.
+    inversion H7; subst; clear H7.
+    inversion H8; subst; clear H8.
+    inversion H13; subst; clear H13.
+    destruct n.
+    1,2:simpl in H.
+    1,2:inversion H.
+    inversion H13; subst; clear H13.
+    exfalso.
+    destruct n.
+    1,2:simpl in H14.
+    1,2:eapply encode_no_input.
+    1,2:apply H14.
+    inversion H14; subst; clear H14.
+    destruct n.
+    1,2:simpl in H.
+    1,2:inversion H.
+    destruct n.
+    1,2:simpl in H10.
+    1,2:inversion H10.
+    destruct n.
+    1,2:simpl in H10.
+    1,2:inversion H10.
+    destruct n.
+    1,2:simpl in H8.
+    1,2:inversion H8.
+    destruct n.
+    1,2:simpl in H10.
+    1,2:inversion H10.
+    destruct n.
+    1,2:simpl in H10.
+    1,2:inversion H10.
+    destruct n.
+    1,2:simpl in H9.
+    1,2:inversion H9.
+    destruct n.
+    1,2:simpl in H6.
+    1,2:inversion H6.
+    inversion H7; subst; clear H7.
+    inversion H8; subst; clear H8.
+    inversion H13; subst; clear H13.
+    destruct n.
+    1,2:simpl in H.
+    1,2:inversion H.
+    inversion H13; subst; clear H13.
+    exfalso.
+    destruct n.
+    1,2:simpl in H14.
+    eapply encode_u_r_bn_output with
+      (u := 3)
+      (r := 2)
+      (n := (4 + n)).
+    1,2:lia.
+    apply H14.
+    eapply encode_no_fn_output.
+    apply H14.
+    inversion H14.
+    destruct n.
+    1,2:simpl in H.
+    1,2:inversion H.
+    destruct n.
+    1,2:simpl in H10.
+    1,2:inversion H10.
+    destruct n.
+    1,2:simpl in H10.
+    1,2:inversion H10.
+    destruct n.
+    1,2:simpl in H8.
+    1,2:inversion H8.
+    destruct n.
+    1,2:simpl in H10.
+    1,2:inversion H10.
+    destruct n.
+    1,2:simpl in H10.
+    1,2:inversion H10.
+    destruct n.
+    1,2:simpl in H9.
+    1,2:inversion H9.
+    destruct n.
+    1,2:simpl in H6.
+    1,2:inversion H6.
+    destruct a.
+    simpl in H5.
+    contradiction.
+    destruct n.
+    1,2:simpl in H1.
+    1,2:inversion H1.
+    destruct n.
+    1,2:simpl in H1.
+    1,2:inversion H1.
+    destruct a.
+    simpl in H5.
+    contradiction.
+    destruct n.
+    1,2:simpl in H5.
+    1,2:inversion H5.
+    destruct n.
+    1,2:simpl in H5.
+    1,2:inversion H5.
+    inversion H11.
+    rename S into T.
+    inversion H5; inversion H6; subst; clear H5; clear H6.
+    inversion H13; subst; clear H13.
+    inversion H1; subst; clear H1.
+    inversion H6; subst; clear H6.
+    inversion H7; subst; clear H7.
+    inversion H8; subst; clear H8.
+    inversion H13; subst; clear H13.
+    inversion H13; subst; clear H13.
+    simpl in H14.
+    exfalso.
+    eapply encode_u_r_bn_output with
+      (u := 3)
+      (r := 2)
+      (n := 7).
+    1,2:lia.
+    apply H14.
+    inversion H14.
+    inversion H13.
+    inversion H11.
+    inversion H11.
+    inversion H10.
+  - inversion H0; subst; clear H0.
+    contradiction.
+    contradiction.
+    inversion H1; subst; clear H1.
+    inversion H1; subst; clear H1.
+    contradiction.
+    contradiction.
+    inversion H0; subst; clear H0.
+    contradiction.
+    inversion H1; subst; clear H1.
+    contradiction.
+    inversion H0; subst; clear H0.
+    contradiction.
+    contradiction.
+    inversion H1.
+    inversion H1.
+    inversion H5; inversion H6; subst; clear H5; clear H6.
+    eexists.
+    exists (App (Force v0) v).
+    split.
+    apply rt_refl.
+    split.
+    simpl.
+    apply wb_con with
+      (c := CRes (CRes (CRes (CRes (CParR
+        (In (BN 3) (In (BN 2) (Out (BN 1) (Out (BN 2) (Out (BN 3) (Par
+          (Link (BN 2) (BN (S (S (S (S (S (S (S (S (S u)))))))))))
+          (Par 
+            (Link (BN 1) (BN (S (S (S (S (S (S (S (S (S r)))))))))))
+            (Link (BN 0) (BN 3))
+          )
+        ))))))
+        (CParL
+          (CRes (CRes CHole))
+          (Out (BN 1) ($ v; [] $))
+        )
+      ))))).
+    apply app_bind_bisim.
+    right.
+    reflexivity.
+    inversion H0.
+    inversion H5; inversion H6; subst; clear H5; clear H6.
+    inversion H1; subst; clear H1.
+    inversion H6; subst; clear H6.
+    inversion H10; subst; clear H10.
+    destruct a.
+    contradiction.
+    1,2:destruct n.
+    1,2,3,4:simpl in H.
+    1,2,3,4:inversion H.
+    inversion H10; subst; clear H10.
+    destruct a.
+    contradiction.
+    1,2:destruct n.
+    1,2,3,4:simpl in H.
+    1,2,3,4:inversion H.
+    destruct a.
+    contradiction.
+    1,2:destruct n.
+    1,2,3,4:simpl in H8.
+    1,2,3,4:inversion H8.
+    destruct a.
+    contradiction.
+    1,2:destruct n.
+    1,2,3,4:simpl in H8.
+    1,2,3,4:inversion H8.
+    destruct a.
+    contradiction.
+    1,2:destruct n.
+    1,2,3,4:simpl in H7.
+    1,2,3,4:inversion H7.
+    destruct a.
+    contradiction.
+    1,2:destruct n.
+    1,2,3,4:simpl in H5.
+    1,2,3,4:inversion H5.
+    inversion H11.
+    inversion H5; inversion H6; subst; clear H5; clear H6.
+    inversion H13; subst; clear H13.
+    inversion H1; subst; clear H1.
+    inversion H6; subst; clear H6.
+    inversion H11.
+    inversion H11.
+    inversion H13.
+    inversion H11.
+    inversion H11.
+    inversion H10.
   - inversion H0; subst; clear H0.
     contradiction.
     contradiction.
@@ -264,57 +609,24 @@ Proof.
     1,2,3,4:simpl in H5.
     1,2,3,4:inversion H5.
     contradiction.
-   
-    
-   
-    
-    
-    inversion H0; subst; clear H0.
-    
-    contradiction.
+    inversion H5; inversion H6; subst; clear H5; clear H6.
+    inversion H13; subst; clear H13.
     inversion H1; subst; clear H1.
-    contradiction.
-    inversion H0; subst; clear H0.
-    contradiction.
-    contradiction.
-    
-  
-Admitted.
-
-Lemma app_complete': forall P s v u r,
-  (($ App s v; u; r; [] $) -( a_tau )> P) ->
-    exists P' t,
-      P =()> P' /\
-      P' ~~ ($ t; u; r; [] $) /\
-      (App s v --> t \/ App s v = t).
-Proof.
-  intros P s v u r Hstep.
-  inversion Hstep. contradiction. subst.
-  inversion H0. contradiction. subst.
-  inversion H1. contradiction. subst.
-  inversion H2. contradiction. subst.
-  inversion H3. contradiction. contradiction. subst.
-  inversion H4. subst.
-  inversion H4. contradiction. contradiction. subst.
-  destruct v.
-  destruct n. simpl in *.
-(* Here we have for all cases of the variable *)
-(* Now we must unfold the R0 process *)
-  destruct R0.
-  eexists. eexists.
-  - split.
-    simpl.
-  
-    eapply rt_trans.
-    apply rt_step.
-    repeat (apply RES_TAU).
-  (*  specialize (wf_term 0 s). *)
-  (* admit goals with terms that are not well formed *)
-  (* The only cases we know that does something is:
-  - R0 is a value
-  - R0 communicates with In (BN 3), and is then stuck
-  *)
-Admitted.
+    inversion H6; subst; clear H6.
+    exfalso.
+    simpl in H11.
+    eapply encode_u_r_bn_output with
+      (u := 1)
+      (r := 0)
+      (n := 5).
+    1,2:lia.
+    apply H11.
+    inversion H11.
+    inversion H13.
+    inversion H11.
+    inversion H11.
+    inversion H10.
+Qed.
 
 Lemma nil_proc_1:
   forall u r s,
