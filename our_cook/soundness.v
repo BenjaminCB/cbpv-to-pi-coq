@@ -522,33 +522,6 @@ Proof.
     apply Hwf.
 Qed.
 
-Lemma context_weak_transition_1:
-  forall p q r,
-    p =()> q ->
-    (Res (Res (Par p r))) =()> (Res (Res (Par q r))).
-Proof.
-Admitted.
-      
-Lemma context_weak_transition_2:
-  forall p q r s,
-    p =()> q ->
-    (Res (Res (Res (Res (Par 
-      (r)
-      (Par
-        (p)
-        (s)
-      )
-    ))))) =()>
-    (Res (Res (Res (Res (Par 
-      (r)
-      (Par
-        (q)
-        (s)
-      )
-    ))))).
-Proof.
-Admitted.
-
 Theorem sound:
   forall s,
     wf_term 0 s ->
@@ -570,7 +543,13 @@ Proof.
     eexists.
     split.
     
-    apply context_weak_transition_1.
+    apply wt_tau_context with 
+      (c := CRes (CRes (CParL
+        CHole
+        (In (BN 0) ($ t; S (S (S u)); S (S (S r)); [(0, 0)] $))
+      ))).
+    simpl.
+    reflexivity.
     apply Hstep.
 
     eapply wb_trans.
@@ -594,7 +573,22 @@ Proof.
     simpl.
     split.
     
-    apply context_weak_transition_2.
+    eapply wt_tau_context with 
+      (c := CRes (CRes (CRes (CRes (CParR
+        (In (BN 3) (In (BN 2) (Out (BN 1) (Out (BN 2) (Out (BN 3) (Par
+          (Link (BN 2) (BN (9 + u)))
+          (Par
+            (Link (BN 1) (BN (9 + r)))
+            (Link (BN 0) (BN 3))
+          )
+        ))))))
+        (CParL
+          CHole
+          (Out (BN 1) ($ v; [] $))
+        )
+      ))))).
+    simpl.
+    reflexivity.
     apply Hstep.
     
     apply wb_con with 
