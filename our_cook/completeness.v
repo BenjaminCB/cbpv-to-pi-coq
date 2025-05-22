@@ -965,45 +965,103 @@ Proof.
   - contradiction.
   - contradiction.
   - specialize (IH1 R 1 0 H1) as [ P1 [ t1 [ Hstep [ Hbisim Hred ] ] ] ].
+    pose 
+      (c := CRes (CRes (CParL
+        CHole
+        (In (BN 0) ($ s2; S (S (S u)); S (S (S r)); [(0, 0)] $))
+      ))).
+    eexists.
+    exists (Bind t1 s2).
+    split.
+    apply wt_tau_context with (c := c).
+    simpl.
+    reflexivity.
+    apply Hstep.
+    simpl.
+    split.
+    apply wb_con with (c := c).
+    apply Hbisim.
+    inversion Hred.
+    left; apply BINDING_EVOLVE; apply H.
+    right; rewrite H; reflexivity.
+  - inversion H1.
+  - rename S into Q.
+    destruct a.
+    contradiction.
+    inversion H6.
+    simpl in H6.
+    inversion H6; subst; clear H6.
     destruct s1.
-    * admit.
-    * inversion H1.
-    * eexists.
-      exists (Bind t1 s2).
+    * simpl in H5.
+      inversion H5.
+    * simpl in H5.
+      inversion H5.
+    * simpl in H5.
+      inversion H5; subst; clear H5.
+      inversion H1; subst; clear H1.
+      inversion H6; subst; clear H6.
+      inversion H7; subst; clear H7.
+      inversion H8; subst; clear H8.
+      inversion H12.
+      inversion H12; subst; clear H12.
+      simpl in H13.
+      exfalso.
+      eapply encode_u_r_bn_output with
+        (u := 3)
+        (r := 2)
+        (n := 4).
+      1,2:lia.
+      apply H13.
+      inversion H13.
+    * simpl in H5.
+      inversion H5; subst; clear H5.
+      inversion H1; subst; clear H1.
+      inversion H6; subst; clear H6.
+      inversion H10.
+      inversion H10.
+    * inversion H5; subst; clear H5.
+      eexists.
+      exists (s2 {{ v {}> Var <<< BV }}).
       split.
-      apply wt_tau_context with
-        (c:= CRes (CRes (CParL 
-          CHole
-          (In (BN 0) ($ s2; S (S (S u)); S (S (S r)); [(0, 0)] $))
-        ))).
-      simpl.
-      reflexivity.
-      apply Hstep.
-      simpl.
+      apply rt_refl.
       split.
-      apply wb_con with
-        (c:= CRes (CRes (CParL 
-          CHole
-          (In (BN 0) ($ s2; S (S (S u)); S (S (S r)); [(0, 0)] $))
-        ))).
-      apply Hbisim.
-      inversion Hred.
+      eapply wb_trans.
+      apply wb_con with 
+        (c := CRes (CRes CHole)).
+      apply substitution.
+      apply H3.
+      inversion H2.
+      apply H1.
+      simpl.
+      eapply wb_trans.
+      change 
+        (Res (Res ($ s2 {{v {}>Var <<< BV}}; S (S u); S (S r); [] $)))
+      with
+        ((Res ^^ 2) ($ s2 {{v {}>Var <<< BV}}; S (S u); S (S r); [] $)).
+      replace (S (S u)) with (2 + u) by lia.
+      replace (S (S r)) with (2 + r) by lia.
+      apply res_n_encoding.
+      apply wf_term_subst.
+      apply H3.
+      inversion H2.
+      apply H1.
+      apply wb_ref.
       left.
-      apply BINDING_EVOLVE.
-      apply H.
-      right.
-      rewrite H.
-      reflexivity.
-    * 
-  - inversion H2.
-  - destruct s1.
-    * inversion H3; inversion H4; subst.
-      inversion H.
-    * inversion H3; inversion H4; subst.
-      inversion H.
-    * inversion H3; inversion H4; subst.
-
-Admitted.
+      apply BINDING_BASE.
+    * simpl in H5.
+      inversion H5; subst; clear H5.
+      inversion H1; subst; clear H1.
+      inversion H6; subst; clear H6.
+      simpl in H10.
+      exfalso.
+      eapply encode_u_r_bn_output with
+        (u := 1)
+        (r := 0)
+        (n := 2).
+      1,2:lia.
+      apply H10.
+      inversion H10.
+Qed.
 
 Theorem complete: 
   forall s P u r,
