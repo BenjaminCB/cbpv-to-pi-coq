@@ -70,8 +70,3 @@ Notation "$ v ; refs $" := (encode_value v refs) (at level 90, left associativit
 Notation "$ s ; u ; r ; refs $" := (encode s u r refs) (at level 90, left associativity).
 
 Definition encode' (s : term) := Res (Res ($ s ; 1 ; 0 ; [] $)).
-
-Lemma wf_encoding:
-  forall s, wf_term 0 s -> wf_proc 0 (encode' s).
-Proof.
-Admitted.

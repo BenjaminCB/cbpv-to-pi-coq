@@ -27,7 +27,7 @@ Inductive wf_var : nat -> var -> Prop :=
     n < limit -> wf_var limit (BV n)
   | WF_FV (limit : nat) (s : string):
     wf_var limit (FV s).
-    
+
 Inductive wf_term : nat -> term -> Prop :=
   | WF_VAL (limit : nat) (v : value):
     wf_value limit v ->
@@ -150,41 +150,6 @@ Inductive reduction: term -> term -> Prop :=
   
   where "s --> t" := (reduction s t).
 
-Lemma wf_red:
-  forall s t,
-    wf_term 0 s ->
-    s --> t ->
-    wf_term 0 t.
-Proof.
-  intros s t Hwf Hred.
-  induction Hred.
-  - inversion Hwf.
-    inversion H2.
-    subst.
-    induction s.
-    * destruct v0.
-      destruct n.
-      destruct n.
-      simpl.
-      inversion H2.
-      apply WF_VAL.
-      apply H1.
-      
-      inversion H3.
-      inversion H1.
-      inversion H7.
-      lia.
-      
-      simpl.
-      apply WF_VAL.
-      apply WF_VAR.
-      apply WF_FV.
-      
-      simpl.
-      apply WF_VAL.
-      apply WF_THUNK.
-Admitted.
-
 Lemma wf_term_extend:
   forall n s,
     wf_term n s -> wf_term (S n) s.
@@ -198,4 +163,3 @@ Lemma wf_term_subst:
     wf_term 0 (s {{v {}> Var <<< BV}}).
 Proof.
 Admitted.
-
