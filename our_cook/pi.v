@@ -254,6 +254,7 @@ Inductive struct_cong : proc -> proc -> Prop :=
   | par_assoc : forall p q r, (Par (Par p q) r) === (Par p (Par q r))
   | par_swap : forall p q r s, (Par (Par p q) (Par r s)) === (Par (Par p r) (Par q s))
   | par_flatten : forall p q r s, (Par (Par p q) (Par r s)) === (Par (Par (Par p q) r) s)
+  | res_assoc : forall p, (Res (Res p)) === (Res (Res (p [[swap]])))
 
   where "P === Q" := (struct_cong P Q).
  

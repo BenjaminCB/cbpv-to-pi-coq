@@ -11,10 +11,10 @@ From Encoding Require Export lemmaResEncoding.
 
 (* TODO is this premise really the correct one *)
 Lemma link_lift: 
-  forall n s u r refs,
-    wf_term 1 s ->
-    Res (Par (Link (BN 0) (BN n)) ($ s ; S u ; S r ; refs $ [[Nat.iter n lift_subst S]])) ~~
-    $ s ; u ; r ; refs $.
+  forall n v refs,
+    wf_value 0 v ->
+    (Res (Par (Link (BN 0) (BN n)) ($ v ; refs $ [[Nat.iter n S]]))) ~~
+    $ v ; refs $.
 Proof.
 Admitted.
 
@@ -53,8 +53,9 @@ Proof.
 Admitted.
 
 Lemma redundant_subst_term:
-  forall s u r refs n subst,
-    wf_term 0 s ->
+  forall s u r refs n m subst,
+    wf_term m s ->
+    n > m ->
     n > u -> 
     n > r -> 
     $ s ; u ; r ; refs $ [[Nat.iter n lift_subst subst]] = 
@@ -82,9 +83,23 @@ Lemma shift_extend_proc:
 Proof.
 Admitted.
 
+Lemma shift_3_swap_lift_swap:
+  forall p,
+    (p [[S]] [[S]] [[S]] [[swap]] [[lift_subst swap]]) =
+    (p [[S]] [[S]] [[S]]).
+Proof.
+Admitted.
+
 Lemma res_rep_in_0:
   forall p,
     Res (Rep (In (BN 0) p)) ~~ Nil.
+Proof.
+Admitted.
+
+Lemma ref_n_in_proc_swap:
+  forall s,
+    wf_term 1 s ->
+    ref_n_in_proc 2 ($ s; 2; 1; [(0, 0)] $ [[swap]] [[lift_subst swap]]) = false.
 Proof.
 Admitted.
 
@@ -177,11 +192,10 @@ Proof.
       )
       (Link (BN 0) (BN (S (S (S (S (S r)))))))
     )))).
-  rewrite redundant_subst_term.
+  rewrite redundant_subst_term with (m := 0).
   apply wb_ref.
   apply Hwf.
-  lia.
-  lia.
+  1,2,3:lia.
   simpl.
   
   eapply wb_trans.
@@ -340,7 +354,86 @@ Proof.
     (lift_subst (lift_subst (lift_subst S)))
   with
     (Nat.iter 3 lift_subst S).
-  (* working towards applyng link *)
+  rewrite redundant_subst_term with (m := 1).
+  rewrite redundant_subst_value.
+  eapply wb_trans.
+  apply wb_struct.
+  repeat apply con_res.
+  eapply sg_trans.
+  eapply sg_trans.
+  apply con_par.
+  eapply sg_trans.
+  apply con_par.
+  apply sg_ref.
+  apply sym.
+  eapply sg_trans.
+  apply sym.
+  apply par_assoc.
+  apply sym.
+  apply par_swap.
+  apply sym.
+  
+  eapply wb_trans.
+  apply wb_struct.
+  eapply sg_trans.
+  do 7 (apply con_res).
+  apply res_assoc.
+  eapply sg_trans.
+  do 6 (apply con_res).
+  apply res_assoc.
+  do 6 (apply con_res).
+  eapply sg_trans.
+  eapply sg_trans.
+  do 2 (apply con_res).
+  simpl.
+  unfold compose.
+  simpl.
+  rewrite shift_3_swap_lift_swap.
+  apply sg_par_res_l.
+  simpl.
+  apply ref_n_in_proc_shift.
+  simpl.
+  rewrite shift_extend_proc.
+  unfold id.
+  apply con_res.
+  apply sg_par_res_l.
+  simpl.
+  apply ref_n_in_proc_shift.
+  simpl.
+  rewrite shift_extend_proc.
+  unfold id.
+  apply sg_par_res_r.
+  simpl.
+  apply ref_n_in_proc_swap.
+  inversion Hwf.
+  inversion H2.
+  apply H6.
+  repeat (simpl; unfold compose; unfold id).
+  
+  eapply wb_trans.
+  apply wb_con with 
+    (c := CRes (CRes (CRes (CRes (CRes (CRes (CParR
+      (Res (Res (Par
+        (Par
+          (Link (BN 0) (BN (8 + r)))
+          (Link (BN 1) (BN (8 + u)))
+        )
+        ($ s; 2; 1; [(0, 0)] $ [[swap]] [[lift_subst swap]] [[lift_subst (lift_subst (0 []>id))]]))))
+      (CHole)
+    ))))))).
+  apply link_lift.
+  inversion Hwf.
+  apply H3.
+  simpl.
+  (*here*)
+  
+  
+  
+  
+  
+  apply sg_par_res_r.
+  simpl.
+  
   eapply wb_trans.
   apply wb_con with
     (c := (CRes (CRes (CRes (CRes (CRes (CRes (CRes (CRes CHole))))))))).
