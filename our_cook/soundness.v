@@ -11,12 +11,13 @@ From Encoding Require Export lemmaResEncoding.
 
 (* TODO is this premise really the correct one *)
 Lemma link_lift: 
-  forall n v refs,
-    wf_value 0 v ->
-    (Res (Par (Link (BN 0) (BN n)) ($ v ; refs $ [[Nat.iter n S]]))) ~~
-    $ v ; refs $.
+  forall s u r n refs,
+    wf_term 1 s ->
+    Res (Par (Link (BN 0) (BN n)) ($ s ; S u ; S r ; refs $ [[Nat.iter n lift_subst S]])) ~~
+    $ s ; u ; r ; refs $.
 Proof.
 Admitted.
+
 
 (* TODO is this premise really the correct one *)
 (* TODO should probably have the implication n <> m *)
@@ -53,9 +54,8 @@ Proof.
 Admitted.
 
 Lemma redundant_subst_term:
-  forall s u r refs n m subst,
-    wf_term m s ->
-    n > m ->
+  forall s u r refs n subst,
+    wf_term 0 s ->
     n > u -> 
     n > r -> 
     $ s ; u ; r ; refs $ [[Nat.iter n lift_subst subst]] = 
@@ -100,6 +100,14 @@ Lemma ref_n_in_proc_swap:
   forall s,
     wf_term 1 s ->
     ref_n_in_proc 2 ($ s; 2; 1; [(0, 0)] $ [[swap]] [[lift_subst swap]]) = false.
+Proof.
+Admitted.
+
+Lemma encode_swap_lift_swap:
+  forall s,
+    wf_term 1 s -> 
+    ($ s; 2; 1; [(0, 0)] $ [[swap]] [[lift_subst swap]]) =
+    ($ s; 1; 0; [(0, 2)] $).
 Proof.
 Admitted.
 
@@ -192,10 +200,10 @@ Proof.
       )
       (Link (BN 0) (BN (S (S (S (S (S r)))))))
     )))).
-  rewrite redundant_subst_term with (m := 0).
+  rewrite redundant_subst_term.
   apply wb_ref.
   apply Hwf.
-  1,2,3:lia.
+  1,2:lia.
   simpl.
   
   eapply wb_trans.
@@ -268,7 +276,7 @@ Proof.
     apply H4.
     eapply wb_trans.
     apply wb_con with 
-      (c := CRes (CRes (CRes CHole))).    
+      (c := CRes (CRes (CRes CHole))).
     simpl.
     apply link_handlers.
     inversion Hwf.
@@ -350,187 +358,96 @@ Lemma app_base_substitution:
     ($ s {{v {}>Var <<< BV}}; u; r; [] $).
 Proof.
   intros s v u r Hwf.
+  inversion Hwf; inversion H2; subst.
   change
     (lift_subst (lift_subst (lift_subst S)))
   with
     (Nat.iter 3 lift_subst S).
-  rewrite redundant_subst_term with (m := 1).
   rewrite redundant_subst_value.
   eapply wb_trans.
   apply wb_struct.
+  eapply sg_trans.
   repeat apply con_res.
+  apply par_flatten.
   eapply sg_trans.
-  eapply sg_trans.
-  apply con_par.
-  eapply sg_trans.
-  apply con_par.
-  apply sg_ref.
-  apply sym.
-  eapply sg_trans.
-  apply sym.
-  apply par_assoc.
-  apply sym.
-  apply par_swap.
-  apply sym.
-  
-  eapply wb_trans.
-  apply wb_struct.
+  do 8 (apply con_res).
+  apply sg_par_res_l.
+  apply ref_n_in_proc_shift.
+  rewrite shift_extend_proc.
   eapply sg_trans.
   do 7 (apply con_res).
-  apply res_assoc.
-  eapply sg_trans.
-  do 6 (apply con_res).
-  apply res_assoc.
-  do 6 (apply con_res).
-  eapply sg_trans.
-  eapply sg_trans.
-  do 2 (apply con_res).
-  simpl.
-  unfold compose.
-  simpl.
-  rewrite shift_3_swap_lift_swap.
   apply sg_par_res_l.
-  simpl.
   apply ref_n_in_proc_shift.
-  simpl.
   rewrite shift_extend_proc.
-  unfold id.
-  apply con_res.
+  do 6 (apply con_res).
   apply sg_par_res_l.
-  simpl.
   apply ref_n_in_proc_shift.
-  simpl.
   rewrite shift_extend_proc.
-  unfold id.
-  apply sg_par_res_r.
-  simpl.
-  apply ref_n_in_proc_swap.
-  inversion Hwf.
-  inversion H2.
-  apply H6.
-  repeat (simpl; unfold compose; unfold id).
-  
   eapply wb_trans.
-  apply wb_con with 
-    (c := CRes (CRes (CRes (CRes (CRes (CRes (CParR
-      (Res (Res (Par
-        (Par
-          (Link (BN 0) (BN (8 + r)))
-          (Link (BN 1) (BN (8 + u)))
-        )
-        ($ s; 2; 1; [(0, 0)] $ [[swap]] [[lift_subst swap]] [[lift_subst (lift_subst (0 []>id))]]))))
-      (CHole)
+  apply wb_con with
+    (c := CRes (CRes (CRes (CRes (CRes (CRes (CParL
+      CHole
+      ($ v; [] $)
     ))))))).
-  apply link_lift.
-  inversion Hwf.
-  apply H3.
-  simpl.
-  (*here*)
-  
-  
-  
-  
-  
-  apply sg_par_res_r.
-  simpl.
-  
-  eapply wb_trans.
-  apply wb_con with
-    (c := (CRes (CRes (CRes (CRes (CRes (CRes (CRes (CRes CHole))))))))).
   eapply wb_trans.
   apply wb_struct.
+  do 2 (apply con_res).
+  eapply sg_trans.
   apply con_res.
-  apply con_par.
-  apply sym.
-  apply sg_ref.
-  eapply wb_trans.
-  apply wb_struct.
-  apply con_res.
-  apply con_par.
-  apply con_par.
-  apply sym.
-  apply sg_ref.
-  apply sg_ref.
-  eapply wb_trans.
-  apply wb_struct.
-  apply con_res.
-  apply con_par.
+  eapply sg_trans.
   apply par_assoc.
-  apply sg_ref.
-  eapply wb_trans.
-  apply wb_struct.
-  apply con_res.
-  apply par_swap.
-  eapply wb_trans.
-  apply wb_struct.
-  apply sg_par_res_l.
-  simpl.
-  apply ref_n_in_proc_shift.
-  apply wb_par.
-  replace 1 with (0 + 1) by lia.
-  replace (S (0 + 1)) with (1 + 1) by lia.
-  apply link_lift.
-  inversion Hwf.
-  inversion H2.
-  apply H6.
-  apply wb_ref.
-  simpl.
-  
-  eapply wb_trans.
-  apply wb_con with
-    (c := (CRes (CRes (CRes (CRes (CRes (CRes CHole))))))).
-  eapply wb_trans.
-  apply wb_struct.
-  repeat (apply con_res).
-  eapply sg_trans.
   apply con_par.
   apply sg_ref.
-  apply sym.
-  eapply sg_trans.
-  apply sym.
   apply par_assoc.
-  eapply wb_trans.
-  apply wb_struct.
   eapply sg_trans.
-  apply con_res.
   apply sg_par_res_r.
-  rewrite shift_extend_proc.
-  apply ref_n_in_proc_shift.
-  apply sg_par_res_r.
-  repeat (rewrite shift_extend_proc).
-  apply ref_n_in_proc_shift.
-  apply wb_par.
-  apply wb_ref.
-  eapply wb_trans.
-  apply wb_struct.
-  repeat (apply con_res).
-  eapply sg_trans.
-  apply sym.
+  reflexivity.
   apply con_par.
   apply sg_ref.
-  apply sym.
+  apply sg_par_res_r.
+  reflexivity.
+  simpl.
   unfold id.
-  apply link_handlers.
-  inversion Hwf.
-  inversion H2.
-  apply H6.
-  simpl.
-  repeat (rewrite shift_extend_proc).
-  
   eapply wb_trans.
   apply wb_con with
-    (c := (CRes (CRes (CRes (CRes (CRes CHole)))))).
-  rewrite redundant_subst_value.
-  apply substitution.
-  inversion Hwf.
-  inversion H2.
+    (c := CRes (CRes (CParR
+      (Link (BN 1) (BN (8 + u)))
+      (CParR
+        (Link (BN 0) (BN (8 + r)))
+        CHole
+      )
+    ))).
+  apply link_lift.
   apply H6.
-  inversion Hwf.
-  apply H3.
-  inversion Hwf.
+  simpl.
+  eapply wb_trans.
+  apply wb_struct.
+  repeat (apply con_res).
+  eapply sg_trans.
+  apply sym.
+  eapply sg_trans.
+  apply con_par.
+  apply sym.
+  apply sg_ref.
+  eapply sg_trans.
+  apply par_assoc.
+  apply con_par.
+  apply sg_ref.
+  apply sym.
+  apply link_handlers.
+  apply H6.
+  simpl.
+  eapply wb_trans.
+  apply wb_con with
+    (c := CRes (CRes (CRes (CRes (CRes CHole))))).
+  eapply wb_trans.
+  apply wb_struct.
+  apply con_res.
+  apply sym.
+  apply substitution.
+  apply H6.
   apply H3.
   simpl.
-  
   replace (S (S (S (S (S u))))) with (5 + u) by lia.
   replace (S (S (S (S (S r))))) with (5 + r) by lia.
   change
@@ -542,6 +459,7 @@ Proof.
   apply wf_term_subst.
   inversion H2.
   apply H6.
+  apply H3.
   apply H3.
 Qed.
 

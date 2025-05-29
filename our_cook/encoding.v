@@ -69,4 +69,4 @@ Notation "$ v ; refs $" := (encode_value v refs) (at level 90, left associativit
 
 Notation "$ s ; u ; r ; refs $" := (encode s u r refs) (at level 90, left associativity).
 
-Definition encode' (s : term) := Res (Res ($ s ; 1 ; 0 ; [] $)).
+Definition encode' (s : term) := Res (Res ($ s ; 1 ; 0 ; [] $)). 
