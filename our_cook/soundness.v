@@ -10,6 +10,7 @@ From Encoding Require Export encoding.
 From Encoding Require Export lemmaResEncoding.
 
 (* TODO is this premise really the correct one *)
+(* Lemma 6.2 *)
 Lemma link_lift: 
   forall s u r n refs,
     wf_term 1 s ->
@@ -21,6 +22,7 @@ Admitted.
 
 (* TODO is this premise really the correct one *)
 (* TODO should probably have the implication n <> m *)
+(* Lemma 6.4 *)
 Lemma link_handlers: forall s n m refs,
   wf_term 1 s ->
   (Res (Res (Par 
@@ -34,6 +36,7 @@ Lemma link_handlers: forall s n m refs,
 Proof.
 Admitted.
 
+(* Lemma 5, substitution-Lemma*)
 Lemma substitution:
   forall s v,
     wf_term 1 s ->
