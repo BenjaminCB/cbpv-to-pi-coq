@@ -6,10 +6,12 @@ From Coq Require Import Lia.
 Notation "f >>> g" := (compose g f) (at level 40, left associativity).
 Notation "g <<< f" := (compose g f) (at level 40, left associativity).
 
+(*Using 'locally nameless'*)
 Inductive var : Type :=
 | BV (n : nat)
 | FV (s : string).
 
+(*Definition 3, CBPV Syntax*)
 Inductive term : Type :=
 | Val (v : value)
 | Abs (s : term)
@@ -22,6 +24,7 @@ with value : Type :=
 | Var (n : var)
 | Thunk (s : term).
 
+(*Definition 40, Well-formed terms*)
 Inductive wf_var : nat -> var -> Prop :=
   | WF_BV (limit : nat) (n : nat):
     n < limit -> wf_var limit (BV n)
@@ -58,16 +61,20 @@ with wf_value : nat -> value -> Prop :=
     wf_term limit s ->
     wf_value limit (Thunk s).
 
+(*Definition 33, id*)
 Definition id (n : nat) := n.
 
+(*Definition 35, extend*)
 Definition extend_rn (s : nat) (rn : nat -> nat) (n : nat) := 
   match n with
   | 0 => s
   | S n => rn n
   end.
 
+(*Definition 36, Lifting*)
 Definition lift_rn (rn : nat -> nat) := extend_rn 0 (rn >>> S).
 
+(*Definition 41, Instantiation of substitutions in CBPV (from names to name)*)
 Fixpoint int_rn (s : term) (rn : nat -> nat) :=
   match s with
   | Val v => Val (int_rn_value v rn)
@@ -107,6 +114,7 @@ Definition lift_subst (subst : nat -> value) :=
 
 Notation "^ subst" := (lift_subst subst) (at level 81, left associativity).
 
+(*Definition 41, Instantiation of substitutions in CBPV (from names to values)*)
 Fixpoint int_subst (s : term) (subst : nat -> value) :=
   match s with
   | Val v => Val (int_subst_value v subst)
@@ -136,6 +144,7 @@ Definition compose_subst_int_subst
 
 Reserved Notation "s --> t" (at level 70).
 
+(*Definition 42, CBPV reduction relation using De Bruijn indices *)
 Inductive reduction: term -> term -> Prop :=
   | BINDING_BASE (v : value) (s : term): 
     (Bind (Ret v) s) --> (s {{v {}> (Var <<< BV)}})
