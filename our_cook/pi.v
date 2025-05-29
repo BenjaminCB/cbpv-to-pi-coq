@@ -9,10 +9,12 @@ From Coq Require Import String Ascii.
 Notation "f >>> g" := (compose g f) (at level 40, left associativity).
 Notation "g <<< f" := (compose g f) (at level 40, left associativity).
 
+(*Using 'locally nameless'*)
 Inductive name : Type :=
 | BN (n : nat)
 | FN (s : string).
 
+(*Definition 14, syntax of the pi-calculus*)
 Inductive proc : Type :=
 | In (ch : name) (p : proc)
 | Out (ch : name) (p : proc)
@@ -22,6 +24,7 @@ Inductive proc : Type :=
 | Link (n m : name)
 | Nil.
 
+(*Definition 50, Well-formed process*)
 Inductive wf_name : nat -> name -> Prop :=
   | WF_BN (limit : nat) (n : nat):
     n < limit -> wf_name limit (BN n)
@@ -54,6 +57,7 @@ Inductive wf_proc : nat -> proc -> Prop :=
   | WF_NIL (limit : nat):
     wf_proc limit Nil.
 
+(*Definition 17, context*)
 Inductive context : Type :=
 | CHole 
 | CIn (ch : name) (c : context)
@@ -74,8 +78,10 @@ Fixpoint plug (c : context) (p : proc) :=
   | CParR p' c' => Par p' (plug c' p)
   end.
 
+(*Definition 33, id*)
 Definition id (n : nat) := n.
 
+(*Definition 43, swap*)
 Definition swap (n : nat) :=
   match n with
   | 0 => 1
@@ -83,15 +89,18 @@ Definition swap (n : nat) :=
   | S n => S n
   end.
 
+(*Definition 35, extend*)
 Definition extend_subst (s : nat) (subst : nat -> nat) (n : nat) := 
   match n with
   | 0 => s
   | S n => subst n
   end.
 
+(*Definition 36, Lifting*)
 Definition lift_subst (subst : nat -> nat) := 
   extend_subst 0 (subst >>> S).
 
+(*Definition 37, Instantiation of a substitution*)
 Fixpoint int_subst (p : proc) (subst : nat -> nat) :=
   match p with
   | In (FN n) p => In (FN n) (int_subst p (lift_subst subst))
@@ -111,6 +120,7 @@ Fixpoint int_subst (p : proc) (subst : nat -> nat) :=
 Notation "p [[ subst ]]" := (int_subst p subst) (at level 90, left associativity).
 Notation "v []> subst" := (extend_subst v subst) (at level 81, left associativity).
 
+(*Definition 45, Actions in piI-calculus*)
 Inductive act : Set :=
   | a_tau : act
   | a_in: name -> act
@@ -125,6 +135,7 @@ Definition dual_act (a : act) :=
   
 Notation "~ a ~" := (dual_act a) (at level 90, left associativity).
 
+(*Definition 52, instantiation of substitutions on actions*)
 Definition int_subst_act (a : act) (subst : nat -> nat) :=
   match a with
   | a_tau => a_tau
@@ -144,6 +155,7 @@ Definition incName (n : name) :=
 
 Reserved Notation "P -( a )> Q" (at level 70).
 
+(*Definition 53, The piI-calculus transition system using De Bruijn index*)
 Inductive trans: proc -> act -> proc -> Prop := 
   | OUT (n : name) (P : proc): 
     (Out n P) -( a_out n )> P
@@ -238,6 +250,7 @@ Notation "constructor ^^ n" := (applier constructor n) (at level 90, left associ
 
 Reserved Notation "P === Q" (at level 70).
 
+(*Definition 24, Structural congruence*)
 Inductive struct_cong : proc -> proc -> Prop :=
   | add_nil : forall p, p === (Par p Nil)
   | del_nil : forall p, (Par p Nil) === p
@@ -260,6 +273,7 @@ Inductive struct_cong : proc -> proc -> Prop :=
  
 Reserved Notation "P ~~ Q" (at level 70).
 
+(*Definition 54, Weak bisimulation*)
 CoInductive weak_bisimilar : proc -> proc -> Prop :=
   | wb : forall p q,
       (forall a p',
