@@ -8,6 +8,7 @@ From Encoding Require Export cbpv.
 From Encoding Require Export pi.
 From Encoding Require Export encoding.
 From Encoding Require Export lemmaResEncoding.
+Require Import Coq.Logic.FunctionalExtensionality.
 
 (* TODO is this premise really the correct one *)
 Lemma link_lift: 
@@ -76,11 +77,130 @@ Lemma ref_n_in_proc_shift:
 Proof.
 Admitted.
 
+Lemma lift_eq:
+  forall subst,
+    subst = id ->
+    lift_subst subst = id.
+Proof.
+  intros subst H.
+  rewrite H.
+  apply functional_extensionality.
+  intros n.
+  destruct n.
+  reflexivity.
+  reflexivity.
+Qed.
+
+Lemma compose_lift_subst:
+  forall subst1 subst2,
+    (lift_subst subst1 >>> lift_subst subst2) = 
+    (lift_subst (subst1 >>> subst2)).
+Proof.
+  intros subst1 subst2.
+  unfold lift_subst.
+  unfold compose.
+  unfold extend_subst.
+  apply functional_extensionality.
+  intros n.
+  destruct n.
+  reflexivity.
+  reflexivity.
+Qed.
+
+Lemma compose_init_subst:
+  forall p subst1 subst2,
+    (p [[subst1]] [[subst2]]) = (p [[subst1 >>> subst2]]).
+Proof.
+  intros p.
+  induction p.
+  all:intros subst1 subst2.
+  - destruct ch.
+    1,2:simpl.
+    1,2:f_equal.
+    1,2:rewrite <- compose_lift_subst.
+    1,2:apply IHp.
+  - destruct ch.
+    1,2:simpl.
+    1,2:f_equal.
+    1,2:rewrite <- compose_lift_subst.
+    1,2:apply IHp.
+  - simpl.
+    f_equal.
+    rewrite <- compose_lift_subst.
+    apply IHp.
+  - simpl.
+    f_equal.
+    apply IHp.
+  - simpl.
+    f_equal.
+    apply IHp1.
+    apply IHp2.
+  - destruct n.
+    all:destruct m.
+    all:simpl.
+    all:f_equal.
+  - reflexivity.
+Qed.
+
+Lemma shift_extend_id:
+  ((0 []> id) <<< S) = id.
+Proof.
+  apply functional_extensionality.
+  intros n.
+  destruct n.
+  all:reflexivity.
+Qed.
+
+Lemma id_proc:
+  forall p,
+    (p [[id]]) = p.
+Proof.
+  intros p.
+  induction p.
+  - destruct ch.
+    all:simpl.
+    all:f_equal.
+    all:rewrite lift_eq.
+    apply IHp.
+    reflexivity.
+    apply IHp.
+    reflexivity.
+  - destruct ch.
+    all:simpl.
+    all:f_equal.
+    all:rewrite lift_eq.
+    apply IHp.
+    reflexivity.
+    apply IHp.
+    reflexivity.
+  - simpl.
+    f_equal.
+    rewrite lift_eq.
+    apply IHp.
+    reflexivity.
+  - simpl.
+    f_equal.
+    apply IHp.
+  - simpl.
+    f_equal.
+    apply IHp1.
+    apply IHp2.
+  - destruct n.
+    all:destruct m.
+    all:simpl.
+    all:reflexivity.
+  - reflexivity.
+Qed. 
+
 Lemma shift_extend_proc:
   forall p,
     (p [[S]] [[0 []> id]]) = p.
 Proof.
-Admitted.
+  intros p.
+  rewrite compose_init_subst.
+  rewrite shift_extend_id.
+  apply id_proc.
+Qed.
 
 Lemma res_rep_in_0:
   forall p,
