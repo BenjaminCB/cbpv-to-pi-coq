@@ -71,11 +71,69 @@ Lemma redundant_subst_value:
 Proof.
 Admitted.
 
+Lemma n_shift_n_m:
+  forall n m,
+    n =? (Nat.iter n lift_subst S) m = false.
+Proof.
+Admitted.
+
+Lemma ref_n_in_proc_shift_n:
+  forall p n,
+    ref_n_in_proc n (p [[Nat.iter n lift_subst S]]) = false.
+Proof.
+  intros p.
+  induction p.
+  - intros n.
+    destruct ch.
+    all:simpl.
+    rewrite n_shift_n_m.
+    all:specialize (IHp (n + 1)).
+    all:rewrite <- Nat.iter_succ.
+    all:replace (S n) with (n + 1) by lia.
+    all:apply IHp.
+  - intros n.
+    destruct ch.
+    all:simpl.
+    rewrite n_shift_n_m.
+    all:specialize (IHp (n + 1)).
+    all:rewrite <- Nat.iter_succ.
+    all:replace (S n) with (n + 1) by lia.
+    all:apply IHp.
+  - intros n.
+    simpl.
+    specialize (IHp (n + 1)).
+    rewrite <- Nat.iter_succ.
+    replace (S n) with (n + 1) by lia.
+    apply IHp.
+  - simpl.
+    apply IHp.
+  - simpl.
+    intros n.
+    rewrite IHp1.
+    rewrite IHp2.
+    reflexivity.
+  - destruct n.
+    all:destruct m.
+    all:simpl.
+    1,2,3:intros m.
+    1,2,3:repeat (rewrite n_shift_n_m).
+    1,2,3:reflexivity.
+    intros H.
+    reflexivity.
+  - intros n.
+    simpl.
+    reflexivity.
+Qed.
+
 Lemma ref_n_in_proc_shift:
   forall p,
     ref_n_in_proc 0 (p[[S]]) = false.
 Proof.
-Admitted.
+  intros p.
+  specialize (ref_n_in_proc_shift_n p 0) as H.
+  simpl in H.
+  apply H.
+Qed.
 
 Lemma lift_eq:
   forall subst,
