@@ -193,7 +193,16 @@ Lemma n_shift_n_m:
   forall n m,
     n =? (Nat.iter n lift_subst S) m = false.
 Proof.
-Admitted.
+  intros n.
+  induction n.
+  - intros m.
+    reflexivity.
+  - intros m.
+    destruct m.
+    reflexivity.
+    simpl.
+    apply IHn.
+Qed.
 
 Lemma ref_n_in_proc_shift_n:
   forall p n,
@@ -377,13 +386,6 @@ Proof.
   rewrite shift_extend_id.
   apply id_proc.
 Qed.
-
-Lemma shift_3_swap_lift_swap:
-  forall p,
-    (p [[S]] [[S]] [[S]] [[swap]] [[lift_subst swap]]) =
-    (p [[S]] [[S]] [[S]]).
-Proof.
-Admitted.
 
 Lemma res_rep_in_0:
   forall p,
