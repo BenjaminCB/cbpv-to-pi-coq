@@ -53,23 +53,137 @@ Lemma encode_reach:
 Proof.
 Admitted.
 
-Lemma redundant_subst_term:
-  forall s u r refs n subst,
-    wf_term 0 s ->
-    n > u -> 
-    n > r -> 
-    $ s ; u ; r ; refs $ [[Nat.iter n lift_subst subst]] = 
-    $ s ; u ; r ; refs $.
+Lemma redundant_subst_nat:
+  forall n u subst,
+    n > u ->
+    Nat.iter n lift_subst subst u = u.
 Proof.
+  intros n.
+  induction n; intros u subst Hgt.
+  - lia.
+  - simpl.
+    unfold lift_subst.
+    unfold extend_subst.
+    destruct u.
+    reflexivity.
+    unfold compose.
+    f_equal.
+    apply IHn.
+    lia.
+Qed.
+
+Lemma iter_succ:
+  forall (n : nat) (f : (nat -> nat) -> nat -> nat) (g : nat -> nat),
+    Nat.iter (S n) f g = f (Nat.iter n f g).
+Proof.
+  intros n f g.
+  reflexivity.
+Qed.
+
+Scheme term_mut := Induction for term Sort Prop
+with   value_mut := Induction for value Sort Prop.
+Combined Scheme term_value_mutual_ind from term_mut, value_mut.
+
+Lemma redundant_subst_mutual:
+  (forall s u r refs n subst,
+    wf_term 0 s ->
+    n > u ->
+    n > r ->
+    $ s ; u ; r ; refs $ [[Nat.iter n lift_subst subst]] =
+    $ s ; u ; r ; refs $) /\
+  (forall v refs subst,
+    wf_value 0 v ->
+    $ v ; refs $ [[lift_subst subst]] =
+    $ v ; refs $).
+Proof.
+  apply term_value_mutual_ind.
+  - intros v Hv u r refs n subst Hwf HGTu HGTr.
+    simpl.
+    rewrite redundant_subst_nat.
+    f_equal.
+    apply Hv.
+    inversion Hwf; subst.
+    apply H1.
+    apply HGTu.
+  - intros s Hs u r refs n subst Hwf HGTu HGTr.
+    simpl.
+    unfold compose.
+    repeat (rewrite <- iter_succ).
+    repeat (rewrite redundant_subst_nat).
+    repeat f_equal.
+    * inversion Hwf; subst.
+      
+      
+    
+    all:lia.
+  - intros s Hs v Hv u r refs n subst Hwf HGTu HGTr.
+    inversion Hwf; subst.
+    simpl.
+    unfold compose.
+    repeat (rewrite <- iter_succ).
+    repeat (rewrite redundant_subst_nat).
+    repeat f_equal.
+    apply Hs.
+    apply H2.
+    1,2:lia.
+    apply Hv.
+    apply H3.
+    all:lia.
+  - intros v Hv u r refs n subst Hwf HGTu HGTr.
+    simpl.
+    unfold compose.
+    repeat (rewrite <- iter_succ).
+    repeat (rewrite redundant_subst_nat).
+    repeat f_equal.
+    apply Hv.
+    inversion Hwf.
+    apply H1.
+    all:lia.
+  - intros v Hv u r refs n subst Hwf HGTu HGTr.
+    simpl.
+    rewrite redundant_subst_nat.
+    rewrite <- iter_succ.
+    f_equal.
+    apply Hv.
+    inversion Hwf; subst.
+    apply H1.
+    lia.
+  - intros s Hs t Ht u r refs n subst Hwf HGTu HGTr.
+    inversion Hwf; subst.
+    simpl.
+    repeat (rewrite <- iter_succ).
+    repeat f_equal.
+    apply Hs.
+    apply H2.
+    1,2:lia.
+    
+    admit.
+    
+  - destruct n.
+    all:intros refs subst Hwf.
+    inversion Hwf; subst.
+    inversion H1; subst.
+    lia.
+    reflexivity.
+  - intros s Hs refs subst Hwf.
+    simpl.
+    unfold pointer.
+    unfold compose.
+    simpl.
+    repeat f_equal.
+    specialize (Hs 1 0 (incRefs 0 4 refs) 4 subst) as H.
+    change
+      (lift_subst (lift_subst (lift_subst (lift_subst subst)))) 
+    with
+      (Nat.iter 4 lift_subst subst).
+    apply H.
+    inversion Hwf; subst.
+    apply H2.
+    all:lia.
 Admitted.
 
-Lemma redundant_subst_value:
-  forall v refs subst,
-    wf_value 0 v ->
-    $ v ; refs $ [[lift_subst subst]] = 
-    $ v ; refs $.
-Proof.
-Admitted.
+Definition redundant_subst_term := proj1 redundant_subst_mutual.
+Definition redundant_subst_value := proj2 redundant_subst_mutual.
 
 Lemma n_shift_n_m:
   forall n m,
