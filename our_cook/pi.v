@@ -228,7 +228,7 @@ Fixpoint ref_n_in_proc (n : nat) (p : proc) : bool :=
   | Out (BN m) q =>
       if (n =? m)
       then true
-      else ref_n_in_proc n q
+      else ref_n_in_proc (n + 1) q
   | Out (FN _) q => ref_n_in_proc (n + 1) q
   | Res q => ref_n_in_proc (n + 1) q
   | Rep q => ref_n_in_proc n q

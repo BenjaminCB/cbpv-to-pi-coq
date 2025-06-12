@@ -8,6 +8,7 @@ From Encoding Require Export cbpv.
 From Encoding Require Export pi.
 From Encoding Require Export encoding.
 From Encoding Require Export lemmaResEncoding.
+Require Import Coq.Logic.FunctionalExtensionality.
 
 (* TODO is this premise really the correct one *)
 (* Lemma 6.2 *)
@@ -56,35 +57,326 @@ Lemma encode_reach:
 Proof.
 Admitted.
 
-Lemma redundant_subst_term:
-  forall s u r refs n subst,
+Lemma redundant_subst_nat:
+  forall n u subst,
+    n > u ->
+    Nat.iter n lift_subst subst u = u.
+Proof.
+  intros n.
+  induction n; intros u subst Hgt.
+  - lia.
+  - simpl.
+    unfold lift_subst.
+    unfold extend_subst.
+    destruct u.
+    reflexivity.
+    unfold compose.
+    f_equal.
+    apply IHn.
+    lia.
+Qed.
+
+Lemma iter_succ:
+  forall (n : nat) (f : (nat -> nat) -> nat -> nat) (g : nat -> nat),
+    Nat.iter (S n) f g = f (Nat.iter n f g).
+Proof.
+  intros n f g.
+  reflexivity.
+Qed.
+
+Scheme term_mut := Induction for term Sort Prop
+with   value_mut := Induction for value Sort Prop.
+Combined Scheme term_value_mutual_ind from term_mut, value_mut.
+
+Lemma redundant_subst_mutual:
+  (forall s u r refs n subst,
     wf_term 0 s ->
-    n > u -> 
-    n > r -> 
-    $ s ; u ; r ; refs $ [[Nat.iter n lift_subst subst]] = 
-    $ s ; u ; r ; refs $.
+    n > u ->
+    n > r ->
+    $ s ; u ; r ; refs $ [[Nat.iter n lift_subst subst]] =
+    $ s ; u ; r ; refs $) /\
+  (forall v refs subst,
+    wf_value 0 v ->
+    $ v ; refs $ [[lift_subst subst]] =
+    $ v ; refs $).
+Proof.
+  apply term_value_mutual_ind.
+  - intros v Hv u r refs n subst Hwf HGTu HGTr.
+    simpl.
+    rewrite redundant_subst_nat.
+    f_equal.
+    apply Hv.
+    inversion Hwf; subst.
+    apply H1.
+    apply HGTu.
+  - intros s Hs u r refs n subst Hwf HGTu HGTr.
+    simpl.
+    unfold compose.
+    repeat (rewrite <- iter_succ).
+    repeat (rewrite redundant_subst_nat).
+    repeat f_equal.
+    * inversion Hwf; subst.
+      
+      
+    
+    all:lia.
+  - intros s Hs v Hv u r refs n subst Hwf HGTu HGTr.
+    inversion Hwf; subst.
+    simpl.
+    unfold compose.
+    repeat (rewrite <- iter_succ).
+    repeat (rewrite redundant_subst_nat).
+    repeat f_equal.
+    apply Hs.
+    apply H2.
+    1,2:lia.
+    apply Hv.
+    apply H3.
+    all:lia.
+  - intros v Hv u r refs n subst Hwf HGTu HGTr.
+    simpl.
+    unfold compose.
+    repeat (rewrite <- iter_succ).
+    repeat (rewrite redundant_subst_nat).
+    repeat f_equal.
+    apply Hv.
+    inversion Hwf.
+    apply H1.
+    all:lia.
+  - intros v Hv u r refs n subst Hwf HGTu HGTr.
+    simpl.
+    rewrite redundant_subst_nat.
+    rewrite <- iter_succ.
+    f_equal.
+    apply Hv.
+    inversion Hwf; subst.
+    apply H1.
+    lia.
+  - intros s Hs t Ht u r refs n subst Hwf HGTu HGTr.
+    inversion Hwf; subst.
+    simpl.
+    repeat (rewrite <- iter_succ).
+    repeat f_equal.
+    apply Hs.
+    apply H2.
+    1,2:lia.
+    
+    admit.
+    
+  - destruct n.
+    all:intros refs subst Hwf.
+    inversion Hwf; subst.
+    inversion H1; subst.
+    lia.
+    reflexivity.
+  - intros s Hs refs subst Hwf.
+    simpl.
+    unfold pointer.
+    unfold compose.
+    simpl.
+    repeat f_equal.
+    specialize (Hs 1 0 (incRefs 0 4 refs) 4 subst) as H.
+    change
+      (lift_subst (lift_subst (lift_subst (lift_subst subst)))) 
+    with
+      (Nat.iter 4 lift_subst subst).
+    apply H.
+    inversion Hwf; subst.
+    apply H2.
+    all:lia.
+Admitted.
+
+Definition redundant_subst_term := proj1 redundant_subst_mutual.
+Definition redundant_subst_value := proj2 redundant_subst_mutual.
+
+Lemma n_shift_n_m:
+  forall n m,
+    n =? (Nat.iter n lift_subst S) m = false.
 Proof.
 Admitted.
 
-Lemma redundant_subst_value:
-  forall v refs subst,
-    wf_value 0 v ->
-    $ v ; refs $ [[lift_subst subst]] = 
-    $ v ; refs $.
+Lemma ref_n_in_proc_shift_n:
+  forall p n,
+    ref_n_in_proc n (p [[Nat.iter n lift_subst S]]) = false.
 Proof.
-Admitted.
+  intros p.
+  induction p.
+  - intros n.
+    destruct ch.
+    all:simpl.
+    rewrite n_shift_n_m.
+    all:specialize (IHp (n + 1)).
+    all:rewrite <- Nat.iter_succ.
+    all:replace (S n) with (n + 1) by lia.
+    all:apply IHp.
+  - intros n.
+    destruct ch.
+    all:simpl.
+    rewrite n_shift_n_m.
+    all:specialize (IHp (n + 1)).
+    all:rewrite <- Nat.iter_succ.
+    all:replace (S n) with (n + 1) by lia.
+    all:apply IHp.
+  - intros n.
+    simpl.
+    specialize (IHp (n + 1)).
+    rewrite <- Nat.iter_succ.
+    replace (S n) with (n + 1) by lia.
+    apply IHp.
+  - simpl.
+    apply IHp.
+  - simpl.
+    intros n.
+    rewrite IHp1.
+    rewrite IHp2.
+    reflexivity.
+  - destruct n.
+    all:destruct m.
+    all:simpl.
+    1,2,3:intros m.
+    1,2,3:repeat (rewrite n_shift_n_m).
+    1,2,3:reflexivity.
+    intros H.
+    reflexivity.
+  - intros n.
+    simpl.
+    reflexivity.
+Qed.
 
 Lemma ref_n_in_proc_shift:
   forall p,
     ref_n_in_proc 0 (p[[S]]) = false.
 Proof.
-Admitted.
+  intros p.
+  specialize (ref_n_in_proc_shift_n p 0) as H.
+  simpl in H.
+  apply H.
+Qed.
+
+Lemma lift_eq:
+  forall subst,
+    subst = id ->
+    lift_subst subst = id.
+Proof.
+  intros subst H.
+  rewrite H.
+  apply functional_extensionality.
+  intros n.
+  destruct n.
+  reflexivity.
+  reflexivity.
+Qed.
+
+Lemma compose_lift_subst:
+  forall subst1 subst2,
+    (lift_subst subst1 >>> lift_subst subst2) = 
+    (lift_subst (subst1 >>> subst2)).
+Proof.
+  intros subst1 subst2.
+  unfold lift_subst.
+  unfold compose.
+  unfold extend_subst.
+  apply functional_extensionality.
+  intros n.
+  destruct n.
+  reflexivity.
+  reflexivity.
+Qed.
+
+Lemma compose_init_subst:
+  forall p subst1 subst2,
+    (p [[subst1]] [[subst2]]) = (p [[subst1 >>> subst2]]).
+Proof.
+  intros p.
+  induction p.
+  all:intros subst1 subst2.
+  - destruct ch.
+    1,2:simpl.
+    1,2:f_equal.
+    1,2:rewrite <- compose_lift_subst.
+    1,2:apply IHp.
+  - destruct ch.
+    1,2:simpl.
+    1,2:f_equal.
+    1,2:rewrite <- compose_lift_subst.
+    1,2:apply IHp.
+  - simpl.
+    f_equal.
+    rewrite <- compose_lift_subst.
+    apply IHp.
+  - simpl.
+    f_equal.
+    apply IHp.
+  - simpl.
+    f_equal.
+    apply IHp1.
+    apply IHp2.
+  - destruct n.
+    all:destruct m.
+    all:simpl.
+    all:f_equal.
+  - reflexivity.
+Qed.
+
+Lemma shift_extend_id:
+  ((0 []> id) <<< S) = id.
+Proof.
+  apply functional_extensionality.
+  intros n.
+  destruct n.
+  all:reflexivity.
+Qed.
+
+Lemma id_proc:
+  forall p,
+    (p [[id]]) = p.
+Proof.
+  intros p.
+  induction p.
+  - destruct ch.
+    all:simpl.
+    all:f_equal.
+    all:rewrite lift_eq.
+    apply IHp.
+    reflexivity.
+    apply IHp.
+    reflexivity.
+  - destruct ch.
+    all:simpl.
+    all:f_equal.
+    all:rewrite lift_eq.
+    apply IHp.
+    reflexivity.
+    apply IHp.
+    reflexivity.
+  - simpl.
+    f_equal.
+    rewrite lift_eq.
+    apply IHp.
+    reflexivity.
+  - simpl.
+    f_equal.
+    apply IHp.
+  - simpl.
+    f_equal.
+    apply IHp1.
+    apply IHp2.
+  - destruct n.
+    all:destruct m.
+    all:simpl.
+    all:reflexivity.
+  - reflexivity.
+Qed. 
 
 Lemma shift_extend_proc:
   forall p,
     (p [[S]] [[0 []> id]]) = p.
 Proof.
-Admitted.
+  intros p.
+  rewrite compose_init_subst.
+  rewrite shift_extend_id.
+  apply id_proc.
+Qed.
 
 Lemma shift_3_swap_lift_swap:
   forall p,
