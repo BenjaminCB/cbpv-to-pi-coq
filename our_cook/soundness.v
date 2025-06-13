@@ -9,6 +9,11 @@ From Encoding Require Export pi.
 From Encoding Require Export encoding.
 From Encoding Require Export lemmaResEncoding.
 Require Import Coq.Logic.FunctionalExtensionality.
+Require Import Coq.Bool.Bool.
+
+Scheme term_mut := Induction for term Sort Prop
+with   value_mut := Induction for value Sort Prop.
+Combined Scheme term_value_mutual_ind from term_mut, value_mut.
 
 (* TODO is this premise really the correct one *)
 (* Lemma 6.2 *)
@@ -49,12 +54,118 @@ Proof.
 Admitted.
 
 Lemma encode_reach: 
-  forall n s u r,
+  (forall s n u r,
     wf_term 0 s ->
     n <> u -> 
     n <> r -> 
-    ref_n_in_proc n ($ s ; u ; r ; [] $) = false.
+    ref_n_in_proc n ($ s ; u ; r ; [] $) = false) /\
+  (forall v n,
+    wf_value 0 v ->
+    ref_n_in_proc (S n) ($ v ; [] $) = false).
 Proof.
+  apply term_value_mutual_ind.
+  - intros v Hv n u r Hwf Hu Hr.
+    simpl.
+    destruct (n =? u) eqn:Heq.
+    apply Nat.eqb_eq in Heq.
+    contradiction.
+    replace (n + 1) with (S n) by lia.
+    apply Hv.
+    inversion Hwf; subst.
+    apply H1.
+  - intros s Hs n u r Hwf Hu Hr.
+    simpl.
+    destruct (n =? u) eqn:Heq.
+    apply Nat.eqb_eq in Heq.
+    contradiction.
+    repeat (
+      replace (n + 1) with (1 + n) by lia;
+      simpl
+    ).
+    admit.
+  - intros s Hs v Hv n u r Hwf Hu Hr.
+    simpl.
+    apply orb_false_iff.
+    split.
+    2:apply orb_false_iff.
+    2:split.
+    * repeat (
+        replace (n + 1) with (1 + n) by lia;
+        simpl
+      ).
+      destruct (n =? u) eqn:Hequ.
+      apply Nat.eqb_eq in Hequ.
+      contradiction.
+      destruct (n =? r) eqn:Heqr.
+      apply Nat.eqb_eq in Heqr.
+      contradiction.
+      reflexivity.
+    * apply Hs.
+      inversion Hwf; subst.
+      apply H2.
+      all:lia.
+    * replace (n + 1 + 1) with (2 + n) by lia.
+      simpl.
+      apply Hv.
+      inversion Hwf; subst.
+      apply H3.
+  - intros v Hv n u r Hwf Hu Hr.
+    simpl.
+    apply orb_false_iff.
+    split.
+    * replace (n + 1 + 1) with (2 + n) by lia.
+      simpl.
+      apply Hv.
+      inversion Hwf; subst.
+      apply H1.
+    * replace (n + 1 + 1) with (2 + n) by lia.
+      simpl.
+      replace (n + 1 + 1 + 1 + 1) with (4 + n) by lia.
+      simpl.
+      destruct (n =? u) eqn:Hequ.
+      apply Nat.eqb_eq in Hequ.
+      contradiction.
+      destruct (n =? r) eqn:Heqr.
+      apply Nat.eqb_eq in Heqr.
+      contradiction.
+      reflexivity.
+  - intros v Hv n u r Hwf Hu Hr.
+    simpl.
+    destruct (n =? r) eqn:Heqr.
+    apply Nat.eqb_eq in Heqr.
+    contradiction.
+    replace (n + 1) with (S n) by lia.
+    apply Hv.
+    inversion Hwf; subst.
+    apply H1.
+  - intros s Hs t Ht n u r Hwf Hu Hr.
+    inversion Hwf; subst.
+    simpl.
+    apply orb_false_iff.
+    split.
+    * apply Hs.
+      apply H2.
+      all:lia.
+    * replace (n + 1 + 1) with (2 + n) by lia.
+      simpl.
+      admit.
+  - intros n n0 Hwf.
+    simpl.
+    replace (n0 + 1) with (1 + n0) by lia.
+    simpl.
+    destruct n.
+    inversion Hwf; subst.
+    inversion H1; subst.
+    inversion H2.
+    reflexivity.
+  - intros s Hs n Hwf.
+    simpl.
+    replace (n + 1) with (1 + n) by lia.
+    simpl.
+    apply Hs.
+    inversion Hwf; subst.
+    apply H1.
+    all:lia.
 Admitted.
 
 Lemma redundant_subst_nat:
@@ -84,10 +195,6 @@ Proof.
   reflexivity.
 Qed.
 
-Scheme term_mut := Induction for term Sort Prop
-with   value_mut := Induction for value Sort Prop.
-Combined Scheme term_value_mutual_ind from term_mut, value_mut.
-
 Lemma redundant_subst_mutual:
   (forall s u r refs n subst,
     wf_term 0 s ->
@@ -115,9 +222,9 @@ Proof.
     repeat (rewrite <- iter_succ).
     repeat (rewrite redundant_subst_nat).
     repeat f_equal.
-    * inversion Hwf; subst.
-      
-      
+    
+    inversion Hwf; subst.
+    admit.
     
     all:lia.
   - intros s Hs v Hv u r refs n subst Hwf HGTu HGTr.
