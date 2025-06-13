@@ -7,7 +7,6 @@ Require Import PeanoNat.
 From Encoding Require Export cbpv.
 From Encoding Require Export pi.
 From Encoding Require Export encoding.
-From Encoding Require Export lemmaResEncoding.
 Require Import Coq.Logic.FunctionalExtensionality.
 Require Import Coq.Bool.Bool.
 
@@ -53,7 +52,7 @@ Lemma substitution:
 Proof.
 Admitted.
 
-Lemma encode_reach: 
+Lemma encode_reach_mutual:
   (forall s n u r,
     wf_term 0 s ->
     n <> u -> 
@@ -167,6 +166,9 @@ Proof.
     apply H1.
     all:lia.
 Admitted.
+
+Definition encode_reach_term := proj1 encode_reach_mutual.
+Definition encode_reach_value := proj2 encode_reach_mutual.
 
 Lemma redundant_subst_nat:
   forall n u subst,
@@ -515,6 +517,185 @@ Lemma encode_swap_lift_swap:
 Proof.
 Admitted.
 
+(* TODO think the refs need to change but lets not say that for now *)
+Lemma res_encoding:
+  (forall s u r refs,
+    wf_term 0 s ->
+    (Res ($ s ; (S u) ; (S r) ; refs $) ~~ 
+    (encode s u r refs))) /\
+  (forall v u r refs,
+    wf_value 0 v -> 
+    Res ($ Val v; S u; S r; refs $) ~~
+    ($ Val v; u; r; refs $)).
+Proof.
+  apply term_value_mutual_ind.
+  - intros v Hv u r refs Hwf.
+    apply Hv.
+    inversion Hwf; subst.
+    apply H1.
+  - intros s Hs u r refs Hwf.
+    simpl.
+    apply wb.
+    split.
+    intros a p' Htrans.
+    destruct a eqn:Ha.
+    inversion Htrans; subst.
+    contradiction.
+    inversion H0; subst.
+    inversion Htrans; subst.
+    inversion H1; subst.
+    destruct n.
+    inversion H.
+    inversion H.
+    inversion Htrans; subst.
+    inversion H1; subst.
+    destruct n.
+    injection H as Heq.
+    rewrite <- Heq.
+    eexists.
+    split.
+    eapply WT_VIS.
+    discriminate.
+    apply rt_refl.
+    apply OUT.
+    apply rt_refl.
+    2: discriminate H.
+    clear Htrans H0 H1 Heq n.
+    apply wb.
+    split.
+    intros a p' Htrans.
+    destruct a.
+    inversion Htrans; subst.
+    contradiction.
+    inversion H0; subst.
+    inversion Htrans; subst.
+    inversion H1; subst.
+    destruct n.
+    injection H as Heq.
+    rewrite <- Heq.
+    eexists.
+    split.
+    eapply WT_VIS.
+    discriminate.
+    apply rt_refl.
+    apply IN.
+    apply rt_refl.
+    2: discriminate H.
+    clear n Htrans H0 H1 Heq.
+    apply wb.
+    split.
+    intros a p' Htrans.
+    destruct a.
+    inversion Htrans; subst.
+    contradiction.
+    inversion H0; subst.
+    inversion Htrans; subst.
+    inversion H1; subst.
+    destruct n.
+    injection H as Heq.
+    rewrite <- Heq.
+    eexists.
+    split.
+    eapply WT_VIS.
+    discriminate.
+    apply rt_refl.
+    apply IN.
+    apply rt_refl.
+    2: discriminate H.
+    clear Heq H1 H0 Htrans n.
+    apply wb.
+    split.
+    intros a p' Htrans.
+    destruct a.
+    inversion Htrans; subst.
+    contradiction.
+    inversion H0; subst.
+    inversion Htrans; subst.
+    inversion H1; subst.
+    destruct n.
+    injection H as Heq.
+    rewrite <- Heq.
+    eexists.
+    split.
+    eapply WT_VIS.
+    discriminate.
+    apply rt_refl.
+    apply IN.
+    apply rt_refl.
+    2: discriminate H.
+    clear Heq H1 H0 Htrans n.
+    change
+      (Res ($ s; 2; 1; (0, 0) :: incRefs 1 4 refs $ 
+        [[lift_subst (lift_subst (lift_subst swap))]]
+        [[lift_subst (lift_subst swap)]] 
+        [[lift_subst swap]] 
+        [[swap]]
+      ))
+    with
+      (Res ($ s; 2; 1; (0, 0) :: incRefs 1 4 refs $ 
+        [[Nat.iter 3 lift_subst swap]]
+        [[Nat.iter 2 lift_subst swap]] 
+        [[lift_subst swap]] 
+        [[swap]]
+      )).
+    rewrite redundant_subst_term.
+    all:admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - admit.
+  - intros s Hs u r refs Hwf.
+    simpl.
+    apply wb.
+    split.
+    intros a p' Htrans.
+    inversion Htrans; subst.
+    inversion H1; subst.
+    destruct a.
+    contradiction.
+    destruct n; discriminate H; discriminate H.
+    destruct n.
+    2:discriminate H.
+    injection H as Heq.
+    rewrite <- Heq.
+    eexists.
+    split.
+    eapply WT_VIS.
+    discriminate.
+    apply rt_refl.
+    apply OUT.
+    apply rt_refl.
+    all:admit.
+Admitted.
+
+(* TODO think the refs need to change but lets not say that for now *)
+Lemma res_n_encoding:
+  forall n s,
+    wf_term 0 s ->
+    forall u r refs,
+      ((Res ^^ n) (encode s (n + u) (n + r) refs)) ~~ (encode s u r refs).
+Proof.
+  intros n.
+  induction n.
+  - intros s Hwf u r refs.
+    simpl.
+    replace (u + 0) with u by lia.
+    replace (r + 0) with r by lia.
+    apply wb_ref.
+  - intros s Hwf u r refs.
+    eapply wb_trans.
+    * simpl.
+      replace (S (n + u)) with (n + S u) by lia.
+      replace (S (n + r)) with (n + S r) by lia.
+      apply wb_con with (c := CRes (CHole)).
+      apply IHn.
+      apply Hwf.
+    * simpl.
+      apply res_encoding.
+      apply Hwf.
+Qed.
+
 Lemma rmIsolatedProc: forall s u r,
   wf_term 0 s ->
   (Res ^^ 6)
@@ -568,7 +749,7 @@ Proof.
   apply wb_struct.
   apply sg_par_res_l.
   simpl.
-  rewrite encode_reach.
+  rewrite encode_reach_term.
   reflexivity.
   apply Hwf.
   discriminate.
