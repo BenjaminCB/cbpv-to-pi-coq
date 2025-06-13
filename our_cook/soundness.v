@@ -500,6 +500,24 @@ Lemma res_rep_in_0:
   forall p,
     Res (Rep (In (BN 0) p)) ~~ Nil.
 Proof.
+  intros p.
+  cofix CH.
+  apply wb.
+  split.
+  - intros a p' Htrans.
+    destruct a.
+    * inversion Htrans; subst.
+      contradiction.
+      inversion H0; subst.
+      inversion H1; subst.
+      contradiction.
+      contradiction.
+      inversion H2; subst.
+      all: swap 1 2.
+      inversion H4; inversion H5; subst.
+      inversion H9; subst.
+      inversion H10; subst.
+      inversion H10; subst.
 Admitted.
 
 Lemma ref_n_in_proc_swap:
