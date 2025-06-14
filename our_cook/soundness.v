@@ -381,8 +381,7 @@ Proof.
   apply functional_extensionality.
   intros n.
   destruct n.
-  reflexivity.
-  reflexivity.
+  all:reflexivity.
 Qed.
 
 Lemma compose_lift_subst:
@@ -391,14 +390,11 @@ Lemma compose_lift_subst:
     (lift_subst (subst1 >>> subst2)).
 Proof.
   intros subst1 subst2.
-  unfold lift_subst.
-  unfold compose.
-  unfold extend_subst.
+  unfold lift_subst; unfold compose; unfold extend_subst.
   apply functional_extensionality.
   intros n.
   destruct n.
-  reflexivity.
-  reflexivity.
+  all:reflexivity.
 Qed.
 
 Lemma compose_init_subst:
@@ -455,10 +451,8 @@ Proof.
     all:simpl.
     all:f_equal.
     all:rewrite lift_eq.
-    apply IHp.
-    reflexivity.
-    apply IHp.
-    reflexivity.
+    1,3:apply IHp.
+    1,2:reflexivity.
   - destruct ch.
     all:simpl.
     all:f_equal.
@@ -657,7 +651,66 @@ Proof.
         [[swap]]
       )).
     rewrite redundant_subst_term.
-    all:admit.
+    1,2:admit.
+    1,2:lia.
+    inversion Htrans; subst.
+    inversion H1; subst.
+    destruct n.
+    discriminate H.
+    discriminate H.
+    intros a q' Htrans.
+    destruct a.
+    inversion Htrans; subst.
+    inversion Htrans; subst.
+    eexists.
+    split.
+    unfold compose.
+    simpl.
+    eapply WT_VIS.
+    discriminate.
+    apply rt_refl.
+    apply RES.
+    discriminate.
+    apply IN.
+    apply rt_refl.
+    change
+      (Res ($ s; 2; 1; (0, 0) :: incRefs 1 4 refs $ 
+        [[lift_subst (lift_subst (lift_subst swap))]]
+        [[lift_subst (lift_subst swap)]] 
+        [[lift_subst swap]] 
+        [[swap]]
+      ))
+    with
+      (Res ($ s; 2; 1; (0, 0) :: incRefs 1 4 refs $ 
+        [[Nat.iter 3 lift_subst swap]]
+        [[Nat.iter 2 lift_subst swap]] 
+        [[lift_subst swap]] 
+        [[swap]]
+      )).
+    rewrite redundant_subst_term.
+    1,2:admit.
+    1,2:lia.
+    inversion Htrans; subst.
+    inversion Htrans; subst.
+    inversion H1; subst.
+    destruct n.
+    discriminate H.
+    discriminate H.
+    intros a q' Htrans.
+    destruct a.
+    inversion Htrans; subst.
+    inversion Htrans; subst.
+    eexists.
+    split.
+    eapply WT_VIS.
+    discriminate.
+    apply rt_refl.
+    apply RES.
+    discriminate.
+    unfold compose.
+    simpl.
+    apply IN.
+    apply rt_refl.
   - admit.
   - admit.
   - admit.
