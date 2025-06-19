@@ -171,4 +171,4 @@ Lemma wf_term_subst:
     wf_value 0 v ->
     wf_term 0 (s {{v {}> Var <<< BV}}).
 Proof.
-Admitted.o
+Admitted.
