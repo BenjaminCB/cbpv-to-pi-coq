@@ -401,8 +401,7 @@ Lemma compose_init_subst:
   forall p subst1 subst2,
     (p [[subst1]] [[subst2]]) = (p [[subst1 >>> subst2]]).
 Proof.
-  intros p.
-  induction p.
+  intros p; induction p.
   all:intros subst1 subst2.
   - destruct ch.
     1,2:simpl.
@@ -711,6 +710,7 @@ Proof.
     simpl.
     apply IN.
     apply rt_refl.
+    all:admit.
   - admit.
   - admit.
   - admit.
